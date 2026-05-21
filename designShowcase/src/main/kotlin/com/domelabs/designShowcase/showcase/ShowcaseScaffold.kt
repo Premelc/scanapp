@@ -1,4 +1,4 @@
-package com.domelabs.scanapp.showcase
+package com.domelabs.designShowcase.showcase
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column

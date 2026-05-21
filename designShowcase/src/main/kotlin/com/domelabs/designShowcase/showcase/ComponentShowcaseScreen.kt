@@ -1,4 +1,4 @@
-package com.domelabs.scanapp
+package com.domelabs.designShowcase.showcase
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -14,8 +14,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
-import com.domelabs.scanapp.showcase.ShowcaseEntry
-import com.domelabs.scanapp.showcase.showcaseEntries
 import com.domelabs.scanapp.uiComponent.components.NeoBrutalCard
 
 @Composable

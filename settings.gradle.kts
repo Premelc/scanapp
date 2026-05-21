@@ -34,4 +34,5 @@ plugins {
 
 include(":shared")
 include(":androidApp")
+include(":designShowcase")
 include(":uiComponent")

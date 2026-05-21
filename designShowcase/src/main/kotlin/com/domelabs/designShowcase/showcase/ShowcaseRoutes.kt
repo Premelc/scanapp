@@ -1,4 +1,4 @@
-package com.domelabs.scanapp.showcase
+package com.domelabs.designShowcase.showcase
 
 import kotlinx.serialization.Serializable
 

@@ -1,6 +1,6 @@
 @file:OptIn(ExperimentalLayoutApi::class)
 
-package com.domelabs.scanapp.showcase
+package com.domelabs.designShowcase.showcase
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Home
@@ -50,6 +49,7 @@ import com.domelabs.scanapp.uiComponent.theme.PastelMint
 import com.domelabs.scanapp.uiComponent.theme.PastelOrange
 import com.domelabs.scanapp.uiComponent.theme.PastelSalmon
 import com.domelabs.scanapp.uiComponent.theme.ScanAppPastels
+import kotlin.collections.get
 
 @Composable
 fun ButtonsShowcaseScreen(onBack: () -> Unit) {
