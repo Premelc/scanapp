@@ -1,4 +1,4 @@
-package com.jetbrains.kmpapp.screens.detail
+package com.domelabs.scanapp.screens.detail
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.background
@@ -35,20 +35,20 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
-import com.jetbrains.kmpapp.data.MuseumObject
-import com.jetbrains.kmpapp.screens.EmptyScreenContent
-import kmp_app_template.shared.generated.resources.Res
-import kmp_app_template.shared.generated.resources.back
-import kmp_app_template.shared.generated.resources.label_artist
-import kmp_app_template.shared.generated.resources.label_credits
-import kmp_app_template.shared.generated.resources.label_date
-import kmp_app_template.shared.generated.resources.label_department
-import kmp_app_template.shared.generated.resources.label_dimensions
-import kmp_app_template.shared.generated.resources.label_medium
-import kmp_app_template.shared.generated.resources.label_repository
-import kmp_app_template.shared.generated.resources.label_title
+import com.domelabs.scanapp.data.MuseumObject
+import com.domelabs.scanapp.screens.EmptyScreenContent
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
+import scan_app.shared.generated.resources.Res
+import scan_app.shared.generated.resources.back
+import scan_app.shared.generated.resources.label_artist
+import scan_app.shared.generated.resources.label_credits
+import scan_app.shared.generated.resources.label_date
+import scan_app.shared.generated.resources.label_department
+import scan_app.shared.generated.resources.label_dimensions
+import scan_app.shared.generated.resources.label_medium
+import scan_app.shared.generated.resources.label_repository
+import scan_app.shared.generated.resources.label_title
 
 @Composable
 fun DetailScreen(

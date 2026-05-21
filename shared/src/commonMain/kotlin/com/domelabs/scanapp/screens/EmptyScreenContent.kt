@@ -1,14 +1,14 @@
-package com.jetbrains.kmpapp.screens
+package com.domelabs.scanapp.screens
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import kmp_app_template.shared.generated.resources.Res
-import kmp_app_template.shared.generated.resources.no_data_available
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.stringResource
+import scan_app.shared.generated.resources.Res
+import scan_app.shared.generated.resources.no_data_available
 
 @OptIn(ExperimentalResourceApi::class)
 @Composable

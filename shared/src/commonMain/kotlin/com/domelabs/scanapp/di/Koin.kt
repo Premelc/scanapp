@@ -1,12 +1,12 @@
-package com.jetbrains.kmpapp.di
+package com.domelabs.scanapp.di
 
-import com.jetbrains.kmpapp.data.InMemoryMuseumStorage
-import com.jetbrains.kmpapp.data.KtorMuseumApi
-import com.jetbrains.kmpapp.data.MuseumApi
-import com.jetbrains.kmpapp.data.MuseumRepository
-import com.jetbrains.kmpapp.data.MuseumStorage
-import com.jetbrains.kmpapp.screens.detail.DetailViewModel
-import com.jetbrains.kmpapp.screens.list.ListViewModel
+import com.domelabs.scanapp.data.InMemoryMuseumStorage
+import com.domelabs.scanapp.data.KtorMuseumApi
+import com.domelabs.scanapp.data.MuseumApi
+import com.domelabs.scanapp.data.MuseumRepository
+import com.domelabs.scanapp.data.MuseumStorage
+import com.domelabs.scanapp.screens.detail.DetailViewModel
+import com.domelabs.scanapp.screens.list.ListViewModel
 import io.ktor.client.HttpClient
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.http.ContentType

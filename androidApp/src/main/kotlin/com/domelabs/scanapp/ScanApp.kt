@@ -1,9 +1,9 @@
-package com.jetbrains.kmpapp
+package com.domelabs.scanapp
 
 import android.app.Application
-import com.jetbrains.kmpapp.di.initKoin
+import com.domelabs.scanapp.di.initKoin
 
-class MuseumApp : Application() {
+class ScanApp : Application() {
     override fun onCreate() {
         super.onCreate()
         initKoin()

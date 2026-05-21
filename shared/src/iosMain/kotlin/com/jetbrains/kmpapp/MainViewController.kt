@@ -1,4 +1,4 @@
-package com.jetbrains.kmpapp
+package com.domelabs.scanapp
 
 import androidx.compose.ui.window.ComposeUIViewController
 
