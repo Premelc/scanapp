@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="generic_error_title">Something went wrong</string>
+    <string name="generic_error_subtitle">Please try again</string>
+    <string name="generic_error">Something went wrong</string>
+    <string name="countdown_next_seconds">for the next %1$d seconds</string>
+    <string name="countdown_next_minutes">for the next %1$d minutes</string>
+    <string name="countdown_next_hours">for the next %1$d hours</string>
+    <string name="countdown_next_hours_minutes">for the next %1$d hours and %2$d minutes</string>
+
+    <!-- Analytics Consent Dialog -->
+    <string name="analytics_consent_title">Help Improve SwiSSH</string>
+    <string name="analytics_consent_description">SwiSSH collects anonymous usage data and crash reports to help us improve the app. This data does not include personal information, connection details, or vault contents.</string>
+    <string name="analytics_consent_data_collected">Data collected:</string>
+    <string name="analytics_consent_data_screen_views">• Screen views (which screens are used)</string>
+    <string name="analytics_consent_data_features">• Feature usage</string>
+    <string name="analytics_consent_data_crashes">• Crash reports and error logs</string>
+    <string name="analytics_consent_data_never">We never collect:</string>
+    <string name="analytics_consent_data_never_passwords">• Passwords or encryption keys</string>
+    <string name="analytics_consent_data_never_connections">• SSH connection details</string>
+    <string name="analytics_consent_data_never_personal">• Personal information</string>
+    <string name="analytics_consent_enable_button">Enable Analytics</string>
+    <string name="analytics_consent_disable_button">Disable</string>
+</resources>
