@@ -44,6 +44,9 @@ kotlin {
         commonMain.dependencies {
             implementation(projects.uiComponent)
 
+            implementation(projects.core.navigation)
+            implementation(projects.core.permission)
+
             implementation(libs.compose.runtime)
             implementation(libs.compose.foundation)
             implementation(libs.compose.material3)
@@ -52,6 +55,8 @@ kotlin {
             implementation(libs.compose.uiToolingPreview)
 
             implementation(libs.navigation.compose)
+            implementation(libs.jetbrains.navigation3.ui)
+            implementation(libs.jetbrains.lifecycle.viewmodelNavigation3)
             implementation(libs.androidx.lifecycle.runtimeCompose)
             implementation(libs.compose.material.icons.core)
 
@@ -62,7 +67,7 @@ kotlin {
             implementation(libs.coil.compose)
             implementation(libs.coil.network.ktor)
             implementation(libs.koin.core)
-            implementation(libs.koin.compose.viewmodel)
+            implementation(libs.koin.viewModel)
         }
     }
 }

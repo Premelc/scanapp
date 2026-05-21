@@ -33,6 +33,15 @@ plugins {
 }
 
 include(":shared")
+
 include(":androidApp")
+
 include(":designShowcase")
+
 include(":uiComponent")
+
+include(":core:persistence")
+include(":core:permission")
+include(":core:navigation")
+include(":core:utils")
+include(":core:file")
