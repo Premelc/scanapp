@@ -45,3 +45,7 @@ include(":core:permission")
 include(":core:navigation")
 include(":core:utils")
 include(":core:file")
+include(":core:scan")
+
+include(":feature:scan:api")
+include(":feature:scan:impl")

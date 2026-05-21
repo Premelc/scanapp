@@ -46,6 +46,7 @@ kotlin {
 
             implementation(projects.core.navigation)
             implementation(projects.core.permission)
+            implementation(projects.feature.scan.api)
 
             implementation(libs.compose.runtime)
             implementation(libs.compose.foundation)
@@ -67,7 +68,6 @@ kotlin {
             implementation(libs.coil.compose)
             implementation(libs.coil.network.ktor)
             implementation(libs.koin.core)
-            implementation(libs.koin.viewModel)
         }
     }
 }

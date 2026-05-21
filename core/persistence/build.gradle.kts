@@ -13,7 +13,7 @@ kotlin {
         namespace = "com.domelabs.scanapp.core.persistence"
         compileSdk = libs.versions.android.compileSdk.get().toInt()
         compilerOptions {
-            freeCompilerArgs.addAll("-Xexpect-actual-classes", "-opt-in=kotlinx.cinterop.ExperimentalForeignApi")
+            freeCompilerArgs.add("-Xexpect-actual-classes")
             jvmTarget.set(JvmTarget.JVM_21)
         }
     }
