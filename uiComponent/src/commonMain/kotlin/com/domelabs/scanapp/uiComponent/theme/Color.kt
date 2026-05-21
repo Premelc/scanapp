@@ -2,6 +2,34 @@ package com.domelabs.scanapp.uiComponent.theme
 
 import androidx.compose.ui.graphics.Color
 
+// Neobrutalism — core palette
+val NeoBlack = Color(0xFF000000)
+val NeoWhite = Color(0xFFFFFFFF)
+val NeoGrayPlaceholder = Color(0xFF9E9E9E)
+val NeoGrayLight = Color(0xFFF5F5F5)
+
+// Neobrutalism — category pastels (from reference UI)
+val PastelOrange = Color(0xFFFFCC80)
+val PastelGreen = Color(0xFFB8E6A3)
+val PastelSalmon = Color(0xFFFFB4A2)
+val PastelOlive = Color(0xFFC5D4A0)
+val PastelTan = Color(0xFFE6D5B8)
+val PastelBlue = Color(0xFFA8D4FF)
+val PastelMint = Color(0xFFB2DFDB)
+
+object ScanAppPastels {
+    val orange = PastelOrange
+    val green = PastelGreen
+    val salmon = PastelSalmon
+    val olive = PastelOlive
+    val tan = PastelTan
+    val blue = PastelBlue
+    val mint = PastelMint
+
+    val all = listOf(orange, green, salmon, olive, tan, blue, mint)
+}
+
+// Legacy brand colors (kept for icons / future dark mode)
 // Primary Colors - Deep Navy Blues (inspired by logo)
 val DeepNavy = Color(0xFF0F1F3F)
 val NavyBlue = Color(0xFF1B2B4B)

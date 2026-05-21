@@ -1,55 +1,47 @@
 package com.domelabs.scanapp.uiComponent.theme
 
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.darkColorScheme
+import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 
-private val ScanAppColorScheme = darkColorScheme(
-    // Primary colors - Cyan/Turquoise accent
-    primary = BrightCyan,
-    onPrimary = TextOnCyan,
-    primaryContainer = NavyBlue,
-    onPrimaryContainer = GlowingCyan,
+private val ScanAppColorScheme = lightColorScheme(
+    primary = NeoBlack,
+    onPrimary = NeoWhite,
+    primaryContainer = PastelBlue,
+    onPrimaryContainer = NeoBlack,
 
-    // Secondary colors - Turquoise/Green
-    secondary = Turquoise,
-    onSecondary = TextOnCyan,
-    secondaryContainer = DarkBlueGray,
-    onSecondaryContainer = SoftCyan,
+    secondary = PastelMint,
+    onSecondary = NeoBlack,
+    secondaryContainer = PastelGreen,
+    onSecondaryContainer = NeoBlack,
 
-    // Tertiary colors - Neon Green
-    tertiary = NeonGreen,
-    onTertiary = TextOnCyan,
-    tertiaryContainer = MidnightBlue,
-    onTertiaryContainer = NeonGreen,
+    tertiary = PastelOrange,
+    onTertiary = NeoBlack,
+    tertiaryContainer = PastelSalmon,
+    onTertiaryContainer = NeoBlack,
 
-    // Error colors
-    error = ErrorRed,
-    onError = TextPrimary,
-    errorContainer = Color(0xFF3D1319),
-    onErrorContainer = ErrorRed,
+    error = Color(0xFFFF6B6B),
+    onError = NeoWhite,
+    errorContainer = PastelSalmon,
+    onErrorContainer = NeoBlack,
 
-    // Background colors - Deep Navy
-    background = DeepNavy,
-    onBackground = TextPrimary,
+    background = NeoWhite,
+    onBackground = NeoBlack,
 
-    // Surface colors - Layered blues
-    surface = SurfaceDark,
-    onSurface = TextPrimary,
-    surfaceVariant = SurfaceLight,
-    onSurfaceVariant = TextSecondary,
-    surfaceTint = BrightCyan,
+    surface = NeoWhite,
+    onSurface = NeoBlack,
+    surfaceVariant = NeoGrayLight,
+    onSurfaceVariant = NeoBlack,
+    surfaceTint = NeoBlack,
 
-    // Outline colors
-    outline = Color(0xFF3D4A5C),
-    outlineVariant = Color(0xFF2A3544),
+    outline = NeoBlack,
+    outlineVariant = NeoGrayPlaceholder,
 
-    // Other
-    scrim = Color(0xFF000000),
-    inverseSurface = Color(0xFFE8F0FF),
-    inverseOnSurface = DeepNavy,
-    inversePrimary = Color(0xFF006780),
+    scrim = NeoBlack,
+    inverseSurface = NeoBlack,
+    inverseOnSurface = NeoWhite,
+    inversePrimary = PastelBlue,
 )
 
 @Composable
