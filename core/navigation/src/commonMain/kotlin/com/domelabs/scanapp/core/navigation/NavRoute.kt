@@ -8,7 +8,13 @@ sealed class NavRoute {
     data object Scan : NavRoute()
 
     @Serializable
+    data object History : NavRoute()
+
+    @Serializable
     data object Settings : NavRoute()
+
+    @Serializable
+    data object Collections : NavRoute()
 
     @Serializable
     data class ScanDetails(

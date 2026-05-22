@@ -1,4 +1,4 @@
-package com.domelabs.scanapp.feature.scan.impl.presentation.model
+package com.domelabs.scanapp.feature.scan.impl.presentation.model.scan
 
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
@@ -8,12 +8,11 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.draggable
-import androidx.compose.foundation.gestures.rememberDraggableState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -22,35 +21,17 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Person
 import org.jetbrains.compose.resources.painterResource
-import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.Place
-import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarData
-import androidx.compose.material3.SnackbarDuration
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.SnackbarResult
-import androidx.compose.material3.SnackbarVisuals
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
@@ -63,9 +44,6 @@ import com.domelabs.scanapp.uiComponent.modifier.neoBrutalStyle
 import com.domelabs.scanapp.uiComponent.modifier.neoBrutalBorder
 import com.domelabs.scanapp.uiComponent.theme.ScanAppTheme
 import org.koin.compose.koinInject
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
-import kotlin.math.abs
 import kotlin.math.roundToInt
 
 @Composable
@@ -89,23 +67,12 @@ private fun ScanScreenContent(
     state: ScanViewState,
     onInteraction: (ScanInteraction) -> Unit,
 ) {
-    ScanHistoryDrawerLayout(
-        close = { onInteraction(ScanInteraction.CloseHistoryDrawer) },
-        deleteItem = { onInteraction(ScanInteraction.DeleteHistoryItem(it)) },
-        clear = { onInteraction(ScanInteraction.ClearHistory) },
-        isHistoryDrawerOpen = state.isHistoryDrawerOpen,
-        historyItems = state.historyItems,
-        openDetails = { item ->
-            onInteraction(
-                ScanInteraction.OpenScanDetails(
-                    rawValue = item.rawValue,
-                    codeKind = item.codeKind,
-                    codeFormat = item.codeFormat,
-                    source = item.source,
-                    scannedAtEpochMillis = item.scannedAtEpochMillis,
-                )
-            )
-        },
+    _root_ide_package_.com.domelabs.scanapp.feature.scan.impl.presentation.model.ScanMenuDrawerLayout(
+        isMenuDrawerOpen = state.isMenuDrawerOpen,
+        close = { onInteraction(ScanInteraction.CloseMenuDrawer) },
+        navigateHistory = { onInteraction(ScanInteraction.NavigateToHistory) },
+        navigateSettings = { onInteraction(ScanInteraction.NavigateToSettings) },
+        navigateCollections = { onInteraction(ScanInteraction.NavigateToCollections) },
     ) {
         Box(
             modifier = Modifier.fillMaxSize()
@@ -131,8 +98,8 @@ private fun ScanScreenContent(
                 flashEnabled = state.flashEnabled,
                 onToggleFlashlight = { onInteraction(ScanInteraction.ToggleFlashlight) },
                 onGallery = { onInteraction(ScanInteraction.OpenGalleryPicker) },
-                onHistory = { onInteraction(ScanInteraction.OpenHistoryDrawer) },
-                onSettings = { onInteraction(ScanInteraction.OpenSettings) },
+                onHistory = { onInteraction(ScanInteraction.NavigateToHistory) },
+                onSettings = { onInteraction(ScanInteraction.OpenMenuDrawer) },
             )
 
             state.error?.let {
@@ -162,22 +129,13 @@ private fun ScanOverlayControls(
                 .padding(20.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
         ) {
+            // Placeholder for the scan strategy drop down button coming in the future
+            Spacer(modifier = Modifier.weight(1f))
             NeoBrutalTextFab(
                 icon = {
                     Icon(
-                        painter = painterResource(ScanAppTheme.icons.history),
-                        contentDescription = "History",
-                        tint = MaterialTheme.colorScheme.onSecondaryContainer,
-                    )
-                },
-                onClick = onHistory,
-                backgroundColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.72f),
-            )
-            NeoBrutalTextFab(
-                icon = {
-                    Icon(
-                        imageVector = Icons.Default.Person,
-                        contentDescription = "Settings",
+                        painter = painterResource(ScanAppTheme.Icons.menu),
+                        contentDescription = "Menu",
                         tint = MaterialTheme.colorScheme.onSecondaryContainer,
                     )
                 },
@@ -197,7 +155,7 @@ private fun ScanOverlayControls(
                 NeoBrutalTextFab(
                     icon = {
                         Icon(
-                            painter = painterResource(if (flashEnabled) ScanAppTheme.icons.flashOn else ScanAppTheme.icons.flashOff),
+                            painter = painterResource(if (flashEnabled) ScanAppTheme.Icons.flashOn else ScanAppTheme.Icons.flashOff),
                             contentDescription = "Flashlight",
                             tint = if (flashEnabled) {
                                 MaterialTheme.colorScheme.onPrimary
@@ -220,7 +178,7 @@ private fun ScanOverlayControls(
             NeoBrutalTextFab(
                 icon = {
                     Icon(
-                        painter = painterResource(ScanAppTheme.icons.gallery),
+                        painter = painterResource(ScanAppTheme.Icons.gallery),
                         contentDescription = "Gallery",
                         tint = MaterialTheme.colorScheme.onSecondaryContainer,
                     )

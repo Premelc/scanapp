@@ -6,6 +6,7 @@ import com.domelabs.scanapp.core.persistence.database.getRoomDatabase
 import com.domelabs.scanapp.core.persistence.datastore.DataStoreSource
 import com.domelabs.scanapp.core.persistence.datastore.createDataStore
 import com.domelabs.scanapp.core.persistence.databaseModule
+import com.domelabs.scanapp.feature.collections.api.collectionsFeatureModule
 import com.domelabs.scanapp.feature.scan.api.scanFeatureModule
 import com.domelabs.scanapp.feature.settings.api.settingsFeatureModule
 import org.koin.core.context.startKoin
@@ -28,6 +29,7 @@ fun initKoin(platformContext: Any) {
             },
             databaseModule,
             scanFeatureModule,
+            collectionsFeatureModule,
             settingsFeatureModule,
         )
     }

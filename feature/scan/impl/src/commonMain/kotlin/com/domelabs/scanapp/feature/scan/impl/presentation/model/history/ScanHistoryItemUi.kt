@@ -1,4 +1,4 @@
-package com.domelabs.scanapp.feature.scan.impl.presentation.model
+package com.domelabs.scanapp.feature.scan.impl.presentation.model.history
 
 import com.domelabs.scanapp.feature.scan.impl.domain.model.ScanHistoryItem
 import kotlin.math.max

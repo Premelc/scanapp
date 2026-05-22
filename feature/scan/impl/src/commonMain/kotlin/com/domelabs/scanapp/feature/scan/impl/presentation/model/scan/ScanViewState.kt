@@ -1,4 +1,4 @@
-package com.domelabs.scanapp.feature.scan.impl.presentation.model
+package com.domelabs.scanapp.feature.scan.impl.presentation.model.scan
 
 import com.domelabs.scanapp.core.scan.ScanError
 import com.domelabs.scanapp.core.scan.ScannedCode
@@ -15,6 +15,5 @@ data class ScanViewState(
     val flashEnabled: Boolean = false,
     val lastDetection: ScannedCode? = null,
     val error: ScanError? = null,
-    val isHistoryDrawerOpen: Boolean = false,
-    val historyItems: List<ScanHistoryItemUi> = emptyList(),
+    val isMenuDrawerOpen: Boolean = false,
 )

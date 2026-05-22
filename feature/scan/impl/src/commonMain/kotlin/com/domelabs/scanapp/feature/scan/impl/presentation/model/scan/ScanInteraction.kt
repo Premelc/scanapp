@@ -1,14 +1,14 @@
-package com.domelabs.scanapp.feature.scan.impl.presentation.model
+package com.domelabs.scanapp.feature.scan.impl.presentation.model.scan
 
 import com.domelabs.scanapp.core.scan.ScanError
 import com.domelabs.scanapp.core.scan.ScannedCode
 
 sealed interface ScanInteraction {
-    data object OpenHistoryDrawer : ScanInteraction
-    data object CloseHistoryDrawer : ScanInteraction
-    data object OpenSettings : ScanInteraction
-    data class DeleteHistoryItem(val id: Long) : ScanInteraction
-    data object ClearHistory : ScanInteraction
+    data object OpenMenuDrawer : ScanInteraction
+    data object CloseMenuDrawer : ScanInteraction
+    data object NavigateToHistory : ScanInteraction
+    data object NavigateToSettings : ScanInteraction
+    data object NavigateToCollections : ScanInteraction
     data object ToggleFlashlight : ScanInteraction
     data object RequestCameraPermission : ScanInteraction
     data object OpenGalleryPicker : ScanInteraction

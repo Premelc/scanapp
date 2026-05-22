@@ -1,4 +1,4 @@
-package com.domelabs.scanapp.feature.scan.impl.presentation.model
+package com.domelabs.scanapp.feature.scan.impl.presentation.model.scan
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -13,33 +13,25 @@ import com.domelabs.scanapp.core.permission.PermissionType
 import com.domelabs.scanapp.core.scan.ScanError
 import com.domelabs.scanapp.core.scan.ScannedCode
 import com.domelabs.scanapp.feature.scan.impl.domain.model.ScanHistorySource
-import com.domelabs.scanapp.feature.scan.impl.domain.usecase.ClearScanHistoryUseCase
-import com.domelabs.scanapp.feature.scan.impl.domain.usecase.DeleteScanHistoryItemUseCase
-import com.domelabs.scanapp.feature.scan.impl.domain.usecase.ObserveScanHistoryUseCase
 import com.domelabs.scanapp.feature.scan.impl.domain.usecase.PlayScanFeedbackIfEnabledUseCase
 import com.domelabs.scanapp.feature.scan.impl.domain.usecase.RegisterScanHistoryUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.WhileSubscribed
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlin.time.Clock
-import kotlin.time.Duration.Companion.seconds
 
 class ScanViewModel(
-    observeScanHistoryUseCase: ObserveScanHistoryUseCase,
     private val registerScanHistoryUseCase: RegisterScanHistoryUseCase,
-    private val deleteScanHistoryItemUseCase: DeleteScanHistoryItemUseCase,
-    private val clearScanHistoryUseCase: ClearScanHistoryUseCase,
     private val playScanFeedbackIfEnabledUseCase: PlayScanFeedbackIfEnabledUseCase,
 ) : ViewModel() {
     private val permissionState = MutableStateFlow(ScanPermissionState.Unknown)
     private val flashEnabled = MutableStateFlow(false)
     private val lastDetection = MutableStateFlow<ScannedCode?>(null)
     private val errorState = MutableStateFlow<ScanError?>(null)
-    private val historyDrawerOpen = MutableStateFlow(false)
+    private val menuDrawerOpen = MutableStateFlow(false)
 
     private val scanState = combine(
         permissionState,
@@ -57,20 +49,18 @@ class ScanViewModel(
 
     val viewState: StateFlow<ScanViewState> = combine(
         scanState,
-        historyDrawerOpen,
-        observeScanHistoryUseCase(),
-    ) { baseState, drawerOpen, history ->
+        menuDrawerOpen,
+    ) { baseState, menuDrawer ->
         ScanViewState(
             permission = baseState.permission,
             flashEnabled = baseState.flashEnabled,
             lastDetection = baseState.lastDetection,
             error = baseState.error,
-            isHistoryDrawerOpen = drawerOpen,
-            historyItems = history.map { it.toUi(Clock.System.now().toEpochMilliseconds()) },
+            isMenuDrawerOpen = menuDrawer,
         )
     }.stateIn(
         scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5.seconds),
+        started = SharingStarted.WhileSubscribed(5_000L),
         initialValue = ScanViewState(),
     )
 
@@ -80,30 +70,32 @@ class ScanViewModel(
 
     fun onInteraction(interaction: ScanInteraction) {
         when (interaction) {
-            ScanInteraction.OpenHistoryDrawer -> {
-                historyDrawerOpen.value = true
+            ScanInteraction.OpenMenuDrawer -> {
+                menuDrawerOpen.value = true
             }
 
-            ScanInteraction.CloseHistoryDrawer -> {
-                historyDrawerOpen.value = false
+            ScanInteraction.CloseMenuDrawer -> {
+                menuDrawerOpen.value = false
             }
 
-            ScanInteraction.OpenSettings -> {
+            ScanInteraction.NavigateToHistory -> {
                 viewModelScope.launch {
-                    historyDrawerOpen.value = false
+                    menuDrawerOpen.value = false
+                    NavigationDispatcher.navigate(NavRoute.History)
+                }
+            }
+
+            ScanInteraction.NavigateToSettings -> {
+                viewModelScope.launch {
+                    menuDrawerOpen.value = false
                     NavigationDispatcher.navigate(NavRoute.Settings)
                 }
             }
 
-            is ScanInteraction.DeleteHistoryItem -> {
+            ScanInteraction.NavigateToCollections -> {
                 viewModelScope.launch {
-                    deleteScanHistoryItemUseCase(interaction.id)
-                }
-            }
-
-            ScanInteraction.ClearHistory -> {
-                viewModelScope.launch {
-                    clearScanHistoryUseCase()
+                    menuDrawerOpen.value = false
+                    NavigationDispatcher.navigate(NavRoute.Collections)
                 }
             }
 

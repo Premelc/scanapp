@@ -10,7 +10,9 @@ import com.domelabs.scanapp.feature.scan.impl.domain.usecase.DeleteScanHistoryIt
 import com.domelabs.scanapp.feature.scan.impl.domain.usecase.ObserveScanHistoryUseCase
 import com.domelabs.scanapp.feature.scan.impl.domain.usecase.PlayScanFeedbackIfEnabledUseCase
 import com.domelabs.scanapp.feature.scan.impl.domain.usecase.RegisterScanHistoryUseCase
-import com.domelabs.scanapp.feature.scan.impl.presentation.model.ScanViewModel
+import com.domelabs.scanapp.feature.scan.impl.presentation.model.details.ScanDetailsScreenViewModel
+import com.domelabs.scanapp.feature.scan.impl.presentation.model.history.ScanHistoryScreenViewModel
+import com.domelabs.scanapp.feature.scan.impl.presentation.model.scan.ScanViewModel
 import org.koin.core.module.dsl.factoryOf
 import org.koin.core.module.dsl.viewModelOf
 import org.koin.dsl.module
@@ -24,4 +26,6 @@ val scanFeatureImplModule = module {
     factoryOf(::ClearScanHistoryUseCase)
     factoryOf(::PlayScanFeedbackIfEnabledUseCase)
     viewModelOf(::ScanViewModel)
+    viewModelOf(::ScanDetailsScreenViewModel)
+    viewModelOf(::ScanHistoryScreenViewModel)
 }

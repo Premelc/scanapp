@@ -53,6 +53,7 @@ import scan_app.uicomponent.generated.resources.ic_lock
 import scan_app.uicomponent.generated.resources.ic_login
 import scan_app.uicomponent.generated.resources.ic_logs
 import scan_app.uicomponent.generated.resources.ic_mail
+import scan_app.uicomponent.generated.resources.ic_menu
 import scan_app.uicomponent.generated.resources.ic_minus_square
 import scan_app.uicomponent.generated.resources.ic_more
 import scan_app.uicomponent.generated.resources.ic_nginx
@@ -85,7 +86,8 @@ import scan_app.uicomponent.generated.resources.ic_warning
 import scan_app.uicomponent.generated.resources.im_app
 
 object ScanAppTheme {
-    object icons {
+    object Icons {
+        val menu = Res.drawable.ic_menu
         val gallery = Res.drawable.ic_gallery
         val flashOn = Res.drawable.ic_flash_on
         val flashOff = Res.drawable.ic_flash_off

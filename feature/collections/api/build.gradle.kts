@@ -9,7 +9,7 @@ plugins {
 
 kotlin {
     android {
-        namespace = "com.domelabs.scanapp.core.scan"
+        namespace = "com.domelabs.scanapp.feature.collections.api"
         compileSdk = libs.versions.android.compileSdk.get().toInt()
         minSdk = libs.versions.android.minSdk.get().toInt()
         compilerOptions {
@@ -25,26 +25,17 @@ kotlin {
         iosSimulatorArm64()
     ).forEach { iosTarget ->
         iosTarget.binaries.framework {
-            baseName = "CoreScan"
+            baseName = "FeatureCollectionsApi"
             isStatic = true
         }
     }
 
     sourceSets {
         commonMain.dependencies {
+            implementation(projects.feature.collections.impl)
+
             implementation(libs.compose.runtime)
-            implementation(libs.compose.foundation)
-            implementation(libs.compose.ui)
-        }
-        androidMain.dependencies {
-            implementation(libs.androidx.activity.compose)
-            implementation(libs.androidx.camera.core)
-            implementation(libs.androidx.camera.camera2)
-            implementation(libs.androidx.camera.lifecycle)
-            implementation(libs.androidx.camera.view)
-            implementation(libs.mlkit.barcode.scanning)
-            implementation(libs.qr.kit)
-            implementation(libs.zxing.core)
+            implementation(libs.koin.core)
         }
     }
 }
