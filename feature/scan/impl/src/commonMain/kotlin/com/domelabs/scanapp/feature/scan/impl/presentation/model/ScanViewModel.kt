@@ -4,6 +4,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.domelabs.scanapp.core.navigation.NavRoute
 import com.domelabs.scanapp.core.navigation.NavigationDispatcher
+import com.domelabs.scanapp.core.notification.AppSnackbarDispatcher
+import com.domelabs.scanapp.core.notification.AppSnackbarEvent
+import com.domelabs.scanapp.core.notification.AppSnackbarKind
 import com.domelabs.scanapp.core.permission.PermissionDispatcher
 import com.domelabs.scanapp.core.permission.PermissionState
 import com.domelabs.scanapp.core.permission.PermissionType
@@ -37,8 +40,6 @@ class ScanViewModel(
     private val lastDetection = MutableStateFlow<ScannedCode?>(null)
     private val errorState = MutableStateFlow<ScanError?>(null)
     private val historyDrawerOpen = MutableStateFlow(false)
-    private val scanSnackbar = MutableStateFlow<ScanSnackbarUi?>(null)
-    private var scanSnackbarEventId = 0L
 
     private val scanState = combine(
         permissionState,
@@ -58,8 +59,7 @@ class ScanViewModel(
         scanState,
         historyDrawerOpen,
         observeScanHistoryUseCase(),
-        scanSnackbar,
-    ) { baseState, drawerOpen, history, snackbar ->
+    ) { baseState, drawerOpen, history ->
         ScanViewState(
             permission = baseState.permission,
             flashEnabled = baseState.flashEnabled,
@@ -67,7 +67,6 @@ class ScanViewModel(
             error = baseState.error,
             isHistoryDrawerOpen = drawerOpen,
             historyItems = history.map { it.toUi(Clock.System.now().toEpochMilliseconds()) },
-            scanSnackbar = snackbar,
         )
     }.stateIn(
         scope = viewModelScope,
@@ -124,13 +123,8 @@ class ScanViewModel(
                 errorState.value = null
             }
 
-            ScanInteraction.DismissScanSnackbar -> {
-                scanSnackbar.value = null
-            }
-
             is ScanInteraction.OpenScanDetails -> {
                 viewModelScope.launch {
-                    scanSnackbar.value = null
                     NavigationDispatcher.navigate(
                         NavRoute.ScanDetails(
                             rawValue = interaction.rawValue,
@@ -154,14 +148,37 @@ class ScanViewModel(
                         source = ScanHistorySource.CAMERA,
                     )
                     if (accepted) {
-                        scanSnackbarEventId += 1
-                        scanSnackbar.value = ScanSnackbarUi(
-                            eventId = scanSnackbarEventId,
-                            rawValue = interaction.code.rawValue,
-                            codeKind = interaction.code.kind.name,
-                            codeFormat = interaction.code.format.name,
-                            source = ScanHistorySource.CAMERA.name,
-                            scannedAtEpochMillis = Clock.System.now().toEpochMilliseconds(),
+                        val codeKind = interaction.code.kind.name
+                        val codeFormat = interaction.code.format.name
+                        val scannedAt = Clock.System.now().toEpochMilliseconds()
+
+                        AppSnackbarDispatcher.dispatch(
+                            AppSnackbarEvent(
+                                title = if (codeKind == "QR") {
+                                    "QR code successfully scanned"
+                                } else {
+                                    "Barcode successfully scanned"
+                                },
+                                subtitle = interaction.code.rawValue,
+                                actionLabel = "Details",
+                                kind = if (codeKind == "QR") {
+                                    AppSnackbarKind.QrSuccess
+                                } else {
+                                    AppSnackbarKind.BarcodeSuccess
+                                },
+                                durationMillis = 5_000L,
+                                onAction = {
+                                    NavigationDispatcher.navigate(
+                                        NavRoute.ScanDetails(
+                                            rawValue = interaction.code.rawValue,
+                                            codeKind = codeKind,
+                                            codeFormat = codeFormat,
+                                            source = ScanHistorySource.CAMERA.name,
+                                            scannedAtEpochMillis = scannedAt,
+                                        )
+                                    )
+                                },
+                            )
                         )
                         playScanFeedbackIfEnabledUseCase()
                     }

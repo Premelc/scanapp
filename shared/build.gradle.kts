@@ -45,6 +45,7 @@ kotlin {
             implementation(projects.uiComponent)
 
             implementation(projects.core.navigation)
+            implementation(projects.core.notification)
             implementation(projects.core.permission)
             implementation(projects.core.persistence)
             implementation(projects.feature.scan.api)

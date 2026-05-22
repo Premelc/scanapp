@@ -24,7 +24,8 @@ import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Person
+import org.jetbrains.compose.resources.painterResource
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Place
 import androidx.compose.material.icons.filled.Star
@@ -60,6 +61,7 @@ import com.domelabs.scanapp.uiComponent.components.NeoBrutalButtonStyle
 import com.domelabs.scanapp.uiComponent.components.NeoBrutalCard
 import com.domelabs.scanapp.uiComponent.modifier.neoBrutalStyle
 import com.domelabs.scanapp.uiComponent.modifier.neoBrutalBorder
+import com.domelabs.scanapp.uiComponent.theme.ScanAppTheme
 import org.koin.compose.koinInject
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -87,54 +89,6 @@ private fun ScanScreenContent(
     state: ScanViewState,
     onInteraction: (ScanInteraction) -> Unit,
 ) {
-    val snackbarHostState = remember { SnackbarHostState() }
-
-    LaunchedEffect(state.scanSnackbar?.eventId) {
-        val snackbar = state.scanSnackbar ?: return@LaunchedEffect
-        snackbarHostState.currentSnackbarData?.dismiss()
-        val currentEventId = snackbar.eventId
-        val autoDismissJob = launch {
-            delay(5_000L)
-            val visuals = snackbarHostState.currentSnackbarData?.visuals as? ScanResultSnackbarVisuals
-            if (visuals?.eventId == currentEventId) {
-                snackbarHostState.currentSnackbarData?.dismiss()
-            }
-        }
-        val result = snackbarHostState.showSnackbar(
-            visuals = ScanResultSnackbarVisuals(
-                eventId = snackbar.eventId,
-                title = if (snackbar.codeKind == "QR") {
-                    "QR code successfully scanned"
-                } else {
-                    "Barcode successfully scanned"
-                },
-                rawValue = snackbar.rawValue,
-                codeKind = snackbar.codeKind,
-                codeFormat = snackbar.codeFormat,
-                source = snackbar.source,
-                scannedAtEpochMillis = snackbar.scannedAtEpochMillis,
-            ),
-        )
-        autoDismissJob.cancel()
-        when (result) {
-            SnackbarResult.ActionPerformed -> {
-                onInteraction(
-                    ScanInteraction.OpenScanDetails(
-                        rawValue = snackbar.rawValue,
-                        codeKind = snackbar.codeKind,
-                        codeFormat = snackbar.codeFormat,
-                        source = snackbar.source,
-                        scannedAtEpochMillis = snackbar.scannedAtEpochMillis,
-                    )
-                )
-            }
-
-            SnackbarResult.Dismissed -> {
-                onInteraction(ScanInteraction.DismissScanSnackbar)
-            }
-        }
-    }
-
     ScanHistoryDrawerLayout(
         close = { onInteraction(ScanInteraction.CloseHistoryDrawer) },
         deleteItem = { onInteraction(ScanInteraction.DeleteHistoryItem(it)) },
@@ -153,153 +107,36 @@ private fun ScanScreenContent(
             )
         },
     ) {
-        Scaffold(
-            snackbarHost = {
-                SnackbarHost(snackbarHostState) { snackbarData ->
-                    ScanResultSnackbar(snackbarData)
-                }
-            },
-        ) { paddingValues ->
-            Box(
-                modifier = Modifier.fillMaxSize()
-            ) {
-                if (state.permission == ScanPermissionState.Granted) {
-                    CodeScanner(
-                        modifier = Modifier.fillMaxSize(),
-                        flashEnabled = state.flashEnabled,
-                        onDetected = { onInteraction(ScanInteraction.CodeDetected(it)) },
-                        onError = { onInteraction(ScanInteraction.ScanFailed(it)) },
-                        cooldownMillis = 2_000L,
-                    )
-                    AnimatedScanWindow(modifier = Modifier.align(Alignment.Center))
-                } else {
-                    PermissionOverlay(
-                        permissionState = state.permission,
-                        onRequestPermission = { onInteraction(ScanInteraction.RequestCameraPermission) },
-                    )
-                }
-
-                ScanOverlayControls(
-                    permissionGranted = state.permission == ScanPermissionState.Granted,
-                    flashEnabled = state.flashEnabled,
-                    onToggleFlashlight = { onInteraction(ScanInteraction.ToggleFlashlight) },
-                    onGallery = { onInteraction(ScanInteraction.OpenGalleryPicker) },
-                    onHistory = { onInteraction(ScanInteraction.OpenHistoryDrawer) },
-                    onSettings = { onInteraction(ScanInteraction.OpenSettings) },
-                )
-
-                state.error?.let {
-                    ErrorOverlay(onRetry = { onInteraction(ScanInteraction.RetryAfterError) })
-                }
-            }
-        }
-    }
-}
-
-private data class ScanResultSnackbarVisuals(
-    val eventId: Long,
-    val title: String,
-    val rawValue: String,
-    val codeKind: String,
-    val codeFormat: String,
-    val source: String,
-    val scannedAtEpochMillis: Long,
-) : SnackbarVisuals {
-    override val actionLabel: String = "Details"
-    override val withDismissAction: Boolean = true
-    override val duration: SnackbarDuration = SnackbarDuration.Indefinite
-    override val message: String = title
-}
-
-@Composable
-private fun ScanResultSnackbar(snackbarData: SnackbarData) {
-    val visuals = snackbarData.visuals as? ScanResultSnackbarVisuals
-    if (visuals == null) {
-        Text(
-            text = snackbarData.visuals.message,
-            style = MaterialTheme.typography.bodyMedium,
-            modifier = Modifier.padding(12.dp),
-        )
-        return
-    }
-
-    val isQr = visuals.codeKind == "QR"
-    val titleColor = if (isQr) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.tertiary
-    var dragOffsetX by remember(visuals.eventId) { mutableFloatStateOf(0f) }
-    val dismissThresholdPx = with(LocalDensity.current) { 100.dp.toPx() }
-
-    NeoBrutalCard(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 12.dp, vertical = 6.dp)
-            .graphicsLayer { translationX = dragOffsetX }
-            .draggable(
-                orientation = androidx.compose.foundation.gestures.Orientation.Horizontal,
-                state = rememberDraggableState { delta ->
-                    dragOffsetX += delta
-                },
-                onDragStopped = {
-                    if (abs(dragOffsetX) > dismissThresholdPx) {
-                        snackbarData.dismiss()
-                    } else {
-                        dragOffsetX = 0f
-                    }
-                },
-            ),
-    ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
+        Box(
+            modifier = Modifier.fillMaxSize()
         ) {
-            Row(
-                modifier = Modifier.weight(1f),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Box(
-                    modifier = Modifier
-                        .size(28.dp)
-                        .clip(RoundedCornerShape(6.dp))
-                        .background(titleColor.copy(alpha = 0.2f)),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Text(
-                        text = if (isQr) "QR" else "BAR",
-                        style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
-                        color = titleColor,
-                    )
-                }
-                Column {
-                    Text(
-                        text = visuals.title,
-                        style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
-                        color = titleColor,
-                    )
-                    Text(
-                        text = visuals.rawValue,
-                        style = MaterialTheme.typography.bodySmall,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                }
+            if (state.permission == ScanPermissionState.Granted) {
+                CodeScanner(
+                    modifier = Modifier.fillMaxSize(),
+                    flashEnabled = state.flashEnabled,
+                    onDetected = { onInteraction(ScanInteraction.CodeDetected(it)) },
+                    onError = { onInteraction(ScanInteraction.ScanFailed(it)) },
+                    cooldownMillis = 2_000L,
+                )
+                AnimatedScanWindow(modifier = Modifier.align(Alignment.Center))
+            } else {
+                PermissionOverlay(
+                    permissionState = state.permission,
+                    onRequestPermission = { onInteraction(ScanInteraction.RequestCameraPermission) },
+                )
             }
 
-            Box(
-                modifier = Modifier
-                    .clip(RoundedCornerShape(8.dp))
-                    .neoBrutalStyle(
-                        backgroundColor = MaterialTheme.colorScheme.secondaryContainer,
-                        cornerRadius = 8.dp,
-                    )
-                    .clickable { snackbarData.performAction() }
-                    .padding(horizontal = 8.dp, vertical = 4.dp),
-                contentAlignment = Alignment.Center,
-            ) {
-                Text(
-                    text = "Details",
-                    style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
-                )
+            ScanOverlayControls(
+                permissionGranted = state.permission == ScanPermissionState.Granted,
+                flashEnabled = state.flashEnabled,
+                onToggleFlashlight = { onInteraction(ScanInteraction.ToggleFlashlight) },
+                onGallery = { onInteraction(ScanInteraction.OpenGalleryPicker) },
+                onHistory = { onInteraction(ScanInteraction.OpenHistoryDrawer) },
+                onSettings = { onInteraction(ScanInteraction.OpenSettings) },
+            )
+
+            state.error?.let {
+                ErrorOverlay(onRetry = { onInteraction(ScanInteraction.RetryAfterError) })
             }
         }
     }
@@ -328,7 +165,7 @@ private fun ScanOverlayControls(
             NeoBrutalTextFab(
                 icon = {
                     Icon(
-                        imageVector = Icons.Default.Home,
+                        painter = painterResource(ScanAppTheme.icons.history),
                         contentDescription = "History",
                         tint = MaterialTheme.colorScheme.onSecondaryContainer,
                     )
@@ -360,7 +197,7 @@ private fun ScanOverlayControls(
                 NeoBrutalTextFab(
                     icon = {
                         Icon(
-                            imageVector = Icons.Default.Star,
+                            painter = painterResource(if (flashEnabled) ScanAppTheme.icons.flashOn else ScanAppTheme.icons.flashOff),
                             contentDescription = "Flashlight",
                             tint = if (flashEnabled) {
                                 MaterialTheme.colorScheme.onPrimary
@@ -383,7 +220,7 @@ private fun ScanOverlayControls(
             NeoBrutalTextFab(
                 icon = {
                     Icon(
-                        imageVector = Icons.Default.Place,
+                        painter = painterResource(ScanAppTheme.icons.gallery),
                         contentDescription = "Gallery",
                         tint = MaterialTheme.colorScheme.onSecondaryContainer,
                     )

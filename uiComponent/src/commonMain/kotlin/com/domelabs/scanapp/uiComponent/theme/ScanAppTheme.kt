@@ -32,9 +32,12 @@ import scan_app.uicomponent.generated.resources.ic_eye_closed
 import scan_app.uicomponent.generated.resources.ic_eye_open
 import scan_app.uicomponent.generated.resources.ic_file
 import scan_app.uicomponent.generated.resources.ic_fingerprint
+import scan_app.uicomponent.generated.resources.ic_flash_off
+import scan_app.uicomponent.generated.resources.ic_flash_on
 import scan_app.uicomponent.generated.resources.ic_folder
 import scan_app.uicomponent.generated.resources.ic_folder_delete
 import scan_app.uicomponent.generated.resources.ic_folder_open
+import scan_app.uicomponent.generated.resources.ic_gallery
 import scan_app.uicomponent.generated.resources.ic_gear
 import scan_app.uicomponent.generated.resources.ic_github
 import scan_app.uicomponent.generated.resources.ic_google
@@ -83,6 +86,9 @@ import scan_app.uicomponent.generated.resources.im_app
 
 object ScanAppTheme {
     object icons {
+        val gallery = Res.drawable.ic_gallery
+        val flashOn = Res.drawable.ic_flash_on
+        val flashOff = Res.drawable.ic_flash_off
         val addFolder = Res.drawable.ic_add_folder
         val addSquare = Res.drawable.ic_add_square
         val arrowDown = Res.drawable.ic_arrow_down

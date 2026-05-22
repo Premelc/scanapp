@@ -13,7 +13,6 @@ sealed interface ScanInteraction {
     data object RequestCameraPermission : ScanInteraction
     data object OpenGalleryPicker : ScanInteraction
     data object RetryAfterError : ScanInteraction
-    data object DismissScanSnackbar : ScanInteraction
     data class OpenScanDetails(
         val rawValue: String,
         val codeKind: String,
