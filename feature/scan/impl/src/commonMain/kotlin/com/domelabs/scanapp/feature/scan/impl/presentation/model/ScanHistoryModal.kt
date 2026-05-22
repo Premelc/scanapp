@@ -37,6 +37,7 @@ internal fun ScanHistoryDrawerLayout(
     close: () -> Unit,
     deleteItem: (Long) -> Unit,
     clear: () -> Unit,
+    openDetails: (ScanHistoryItemUi) -> Unit,
     content: @Composable () -> Unit,
 ){
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
@@ -72,6 +73,7 @@ internal fun ScanHistoryDrawerLayout(
                             onClose = close,
                             onDeleteItem = deleteItem,
                             onClearAll = clear,
+                            onOpenDetails = openDetails,
                         )
                     }
                 }
@@ -90,6 +92,7 @@ private fun HistoryDrawerSheetContent(
     onClose: () -> Unit,
     onDeleteItem: (Long) -> Unit,
     onClearAll: () -> Unit,
+    onOpenDetails: (ScanHistoryItemUi) -> Unit,
 ) {
     NeoBrutalCard(
         modifier = Modifier
@@ -137,7 +140,7 @@ private fun HistoryDrawerSheetContent(
                     NeoBrutalCard(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .clickable(onClick = {}),
+                            .clickable(onClick = { onOpenDetails(item) }),
                         showShadow = false,
                     ) {
                         Row(

@@ -17,4 +17,5 @@ data class ScanViewState(
     val error: ScanError? = null,
     val isHistoryDrawerOpen: Boolean = false,
     val historyItems: List<ScanHistoryItemUi> = emptyList(),
+    val scanSnackbar: ScanSnackbarUi? = null,
 )

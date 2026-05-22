@@ -6,6 +6,10 @@ import kotlin.math.max
 data class ScanHistoryItemUi(
     val id: Long,
     val rawValue: String,
+    val codeKind: String,
+    val codeFormat: String,
+    val source: String,
+    val scannedAtEpochMillis: Long,
     val subtitle: String,
     val relativeTime: String,
 )
@@ -15,6 +19,10 @@ fun ScanHistoryItem.toUi(nowEpochMillis: Long): ScanHistoryItemUi {
     return ScanHistoryItemUi(
         id = id,
         rawValue = rawValue,
+        codeKind = codeKind,
+        codeFormat = codeFormat,
+        source = source.name,
+        scannedAtEpochMillis = timestampEpochMillis,
         subtitle = "$codeKind • $codeFormat • ${source.name}",
         relativeTime = relative,
     )

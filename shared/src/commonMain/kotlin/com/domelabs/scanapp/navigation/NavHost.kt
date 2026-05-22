@@ -11,6 +11,7 @@ import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
 import com.domelabs.scanapp.core.navigation.NavRoute
+import com.domelabs.scanapp.feature.scan.api.ScanDetailsEntryPoint
 import com.domelabs.scanapp.feature.scan.api.ScanScreenEntryPoint
 import com.domelabs.scanapp.feature.settings.api.SettingsScreenEntryPoint
 
@@ -50,5 +51,8 @@ internal fun EntryProviderScope<NavRoute>.coreNavigation() {
     }
     entry<NavRoute.Settings> {
         SettingsScreenEntryPoint()
+    }
+    entry<NavRoute.ScanDetails> { route ->
+        ScanDetailsEntryPoint(route)
     }
 }

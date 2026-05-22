@@ -37,6 +37,8 @@ class ScanViewModel(
     private val lastDetection = MutableStateFlow<ScannedCode?>(null)
     private val errorState = MutableStateFlow<ScanError?>(null)
     private val historyDrawerOpen = MutableStateFlow(false)
+    private val scanSnackbar = MutableStateFlow<ScanSnackbarUi?>(null)
+    private var scanSnackbarEventId = 0L
 
     private val scanState = combine(
         permissionState,
@@ -56,7 +58,8 @@ class ScanViewModel(
         scanState,
         historyDrawerOpen,
         observeScanHistoryUseCase(),
-    ) { baseState, drawerOpen, history ->
+        scanSnackbar,
+    ) { baseState, drawerOpen, history, snackbar ->
         ScanViewState(
             permission = baseState.permission,
             flashEnabled = baseState.flashEnabled,
@@ -64,6 +67,7 @@ class ScanViewModel(
             error = baseState.error,
             isHistoryDrawerOpen = drawerOpen,
             historyItems = history.map { it.toUi(Clock.System.now().toEpochMilliseconds()) },
+            scanSnackbar = snackbar,
         )
     }.stateIn(
         scope = viewModelScope,
@@ -120,6 +124,25 @@ class ScanViewModel(
                 errorState.value = null
             }
 
+            ScanInteraction.DismissScanSnackbar -> {
+                scanSnackbar.value = null
+            }
+
+            is ScanInteraction.OpenScanDetails -> {
+                viewModelScope.launch {
+                    scanSnackbar.value = null
+                    NavigationDispatcher.navigate(
+                        NavRoute.ScanDetails(
+                            rawValue = interaction.rawValue,
+                            codeKind = interaction.codeKind,
+                            codeFormat = interaction.codeFormat,
+                            source = interaction.source,
+                            scannedAtEpochMillis = interaction.scannedAtEpochMillis,
+                        )
+                    )
+                }
+            }
+
             is ScanInteraction.CodeDetected -> {
                 lastDetection.value = interaction.code
                 errorState.value = null
@@ -131,6 +154,15 @@ class ScanViewModel(
                         source = ScanHistorySource.CAMERA,
                     )
                     if (accepted) {
+                        scanSnackbarEventId += 1
+                        scanSnackbar.value = ScanSnackbarUi(
+                            eventId = scanSnackbarEventId,
+                            rawValue = interaction.code.rawValue,
+                            codeKind = interaction.code.kind.name,
+                            codeFormat = interaction.code.format.name,
+                            source = ScanHistorySource.CAMERA.name,
+                            scannedAtEpochMillis = Clock.System.now().toEpochMilliseconds(),
+                        )
                         playScanFeedbackIfEnabledUseCase()
                     }
                 }
