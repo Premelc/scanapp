@@ -6,6 +6,6 @@ import com.domelabs.scanapp.di.initKoin
 class ScanApp : Application() {
     override fun onCreate() {
         super.onCreate()
-        initKoin()
+        initKoin(this)
     }
 }

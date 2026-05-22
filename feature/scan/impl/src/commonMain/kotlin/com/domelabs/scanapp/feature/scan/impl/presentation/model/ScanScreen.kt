@@ -1,4 +1,4 @@
-package com.domelabs.scanapp.feature.scan.impl
+package com.domelabs.scanapp.feature.scan.impl.presentation.model
 
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
@@ -6,6 +6,7 @@ import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -18,6 +19,7 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBarsPadding
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -25,6 +27,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.IntOffset
@@ -34,7 +37,9 @@ import com.domelabs.scanapp.core.scan.CodeScanner
 import com.domelabs.scanapp.uiComponent.components.NeoBrutalButton
 import com.domelabs.scanapp.uiComponent.components.NeoBrutalButtonStyle
 import com.domelabs.scanapp.uiComponent.components.NeoBrutalCard
+import com.domelabs.scanapp.uiComponent.modifier.neoBrutalStyle
 import com.domelabs.scanapp.uiComponent.modifier.neoBrutalBorder
+import com.domelabs.scanapp.uiComponent.theme.NeoBrutalism
 import org.koin.compose.koinInject
 import kotlin.math.roundToInt
 
@@ -59,69 +64,122 @@ private fun ScanScreenContent(
     state: ScanViewState,
     onInteraction: (ScanInteraction) -> Unit,
 ) {
-    Box(modifier = Modifier.fillMaxSize()) {
-        if (state.permission == ScanPermissionState.Granted) {
-            CodeScanner(
-                modifier = Modifier.fillMaxSize(),
-                enabled = state.isScannerActive,
-                flashEnabled = state.flashEnabled,
-                onDetected = { onInteraction(ScanInteraction.CodeDetected(it)) },
-                onError = { onInteraction(ScanInteraction.ScanFailed(it)) },
-                cooldownMillis = 2_000L,
-            )
-            ScanOverlay(
+    ScanHistoryDrawerLayout(
+        close = { onInteraction(ScanInteraction.CloseHistoryDrawer) },
+        deleteItem = { onInteraction(ScanInteraction.DeleteHistoryItem(it)) },
+        clear = { onInteraction(ScanInteraction.ClearHistory) },
+        isHistoryDrawerOpen = state.isHistoryDrawerOpen,
+        historyItems = state.historyItems,
+    ) {
+        Box(modifier = Modifier.fillMaxSize()) {
+            if (state.permission == ScanPermissionState.Granted) {
+                CodeScanner(
+                    modifier = Modifier.fillMaxSize(),
+                    enabled = state.isScannerActive,
+                    flashEnabled = state.flashEnabled,
+                    onDetected = { onInteraction(ScanInteraction.CodeDetected(it)) },
+                    onError = { onInteraction(ScanInteraction.ScanFailed(it)) },
+                    cooldownMillis = 2_000L,
+                )
+                AnimatedScanWindow(modifier = Modifier.align(Alignment.Center))
+            } else {
+                PermissionOverlay(
+                    permissionState = state.permission,
+                    onRequestPermission = { onInteraction(ScanInteraction.RequestCameraPermission) },
+                )
+            }
+
+            ScanOverlayControls(
+                permissionGranted = state.permission == ScanPermissionState.Granted,
                 flashEnabled = state.flashEnabled,
                 onToggleFlashlight = { onInteraction(ScanInteraction.ToggleFlashlight) },
                 onGallery = { onInteraction(ScanInteraction.OpenGalleryPicker) },
+                onHistory = { onInteraction(ScanInteraction.OpenHistoryDrawer) },
             )
+
             state.error?.let {
                 ErrorOverlay(onRetry = { onInteraction(ScanInteraction.RetryAfterError) })
             }
-        } else {
-            PermissionOverlay(
-                permissionState = state.permission,
-                onRequestPermission = { onInteraction(ScanInteraction.RequestCameraPermission) },
-            )
         }
     }
 }
 
 @Composable
-private fun ScanOverlay(
+private fun ScanOverlayControls(
+    permissionGranted: Boolean,
     flashEnabled: Boolean,
     onToggleFlashlight: () -> Unit,
     onGallery: () -> Unit,
+    onHistory: () -> Unit,
 ) {
-    Box(modifier = Modifier.fillMaxSize().systemBarsPadding()) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .systemBarsPadding(),
+    ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(20.dp),
             horizontalArrangement = Arrangement.End,
         ) {
-            NeoBrutalButton(
-                text = if (flashEnabled) "Flash on" else "Flash off",
-                style = NeoBrutalButtonStyle.Secondary,
-                onClick = onToggleFlashlight,
+            NeoBrutalTextFab(
+                label = "H",
+                onClick = onHistory,
             )
         }
-
-        AnimatedScanWindow(
-            modifier = Modifier.align(Alignment.Center),
-        )
 
         Row(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
+                .fillMaxWidth()
                 .padding(20.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
         ) {
-            NeoBrutalButton(
-                text = "Open gallery",
+            if (permissionGranted) {
+                NeoBrutalTextFab(
+                    label = if (flashEnabled) "ON" else "OFF",
+                    onClick = onToggleFlashlight,
+                )
+            } else {
+                SpacerFabPlaceholder()
+            }
+
+            NeoBrutalTextFab(
+                label = "G",
                 onClick = onGallery,
-                style = NeoBrutalButtonStyle.Secondary,
             )
         }
     }
+}
+
+@Composable
+private fun NeoBrutalTextFab(
+    label: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Box(
+        modifier = modifier
+            .size(56.dp)
+            .clip(RoundedCornerShape(NeoBrutalism.CornerRadius))
+            .neoBrutalStyle(
+                backgroundColor = MaterialTheme.colorScheme.secondaryContainer,
+                cornerRadius = NeoBrutalism.CornerRadius,
+            )
+            .clickable(onClick = onClick),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold),
+        )
+    }
+}
+
+@Composable
+private fun SpacerFabPlaceholder() {
+    Box(modifier = Modifier.size(56.dp))
 }
 
 @Composable

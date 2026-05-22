@@ -46,6 +46,7 @@ kotlin {
 
             implementation(projects.core.navigation)
             implementation(projects.core.permission)
+            implementation(projects.core.persistence)
             implementation(projects.feature.scan.api)
 
             implementation(libs.compose.runtime)

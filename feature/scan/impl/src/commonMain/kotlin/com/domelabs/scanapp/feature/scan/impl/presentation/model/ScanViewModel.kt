@@ -1,4 +1,4 @@
-package com.domelabs.scanapp.feature.scan.impl
+package com.domelabs.scanapp.feature.scan.impl.presentation.model
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -7,6 +7,11 @@ import com.domelabs.scanapp.core.permission.PermissionState
 import com.domelabs.scanapp.core.permission.PermissionType
 import com.domelabs.scanapp.core.scan.ScanError
 import com.domelabs.scanapp.core.scan.ScannedCode
+import com.domelabs.scanapp.feature.scan.impl.domain.model.ScanHistorySource
+import com.domelabs.scanapp.feature.scan.impl.domain.usecase.ClearScanHistoryUseCase
+import com.domelabs.scanapp.feature.scan.impl.domain.usecase.DeleteScanHistoryItemUseCase
+import com.domelabs.scanapp.feature.scan.impl.domain.usecase.ObserveScanHistoryUseCase
+import com.domelabs.scanapp.feature.scan.impl.domain.usecase.RegisterScanHistoryUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -14,28 +19,48 @@ import kotlinx.coroutines.flow.WhileSubscribed
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlin.time.Clock
 import kotlin.time.Duration.Companion.seconds
 
-class ScanViewModel() : ViewModel() {
+class ScanViewModel(
+    observeScanHistoryUseCase: ObserveScanHistoryUseCase,
+    private val registerScanHistoryUseCase: RegisterScanHistoryUseCase,
+    private val deleteScanHistoryItemUseCase: DeleteScanHistoryItemUseCase,
+    private val clearScanHistoryUseCase: ClearScanHistoryUseCase,
+) : ViewModel() {
     private val permissionState = MutableStateFlow(ScanPermissionState.Unknown)
     private val flashEnabled = MutableStateFlow(false)
     private val lastDetection = MutableStateFlow<ScannedCode?>(null)
     private val errorState = MutableStateFlow<ScanError?>(null)
-    private val scannerActive = MutableStateFlow(true)
+    private val historyDrawerOpen = MutableStateFlow(false)
 
-    val viewState: StateFlow<ScanViewState> = combine(
+    private val scanState = combine(
         permissionState,
         flashEnabled,
         lastDetection,
         errorState,
-        scannerActive,
-    ) { permission, flash, lastCode, error, active ->
+    ) { permission, flash, lastCode, error ->
         ScanViewState(
             permission = permission,
             flashEnabled = flash,
             lastDetection = lastCode,
             error = error,
-            isScannerActive = active,
+        )
+    }
+
+    val viewState: StateFlow<ScanViewState> = combine(
+        scanState,
+        historyDrawerOpen,
+        observeScanHistoryUseCase(),
+    ) { baseState, drawerOpen, history ->
+        ScanViewState(
+            permission = baseState.permission,
+            flashEnabled = baseState.flashEnabled,
+            lastDetection = baseState.lastDetection,
+            error = baseState.error,
+            isScannerActive = baseState.isScannerActive,
+            isHistoryDrawerOpen = drawerOpen,
+            historyItems = history.map { it.toUi(Clock.System.now().toEpochMilliseconds()) },
         )
     }.stateIn(
         scope = viewModelScope,
@@ -49,6 +74,26 @@ class ScanViewModel() : ViewModel() {
 
     fun onInteraction(interaction: ScanInteraction) {
         when (interaction) {
+            ScanInteraction.OpenHistoryDrawer -> {
+                historyDrawerOpen.value = true
+            }
+
+            ScanInteraction.CloseHistoryDrawer -> {
+                historyDrawerOpen.value = false
+            }
+
+            is ScanInteraction.DeleteHistoryItem -> {
+                viewModelScope.launch {
+                    deleteScanHistoryItemUseCase(interaction.id)
+                }
+            }
+
+            ScanInteraction.ClearHistory -> {
+                viewModelScope.launch {
+                    clearScanHistoryUseCase()
+                }
+            }
+
             ScanInteraction.ToggleFlashlight -> {
                 flashEnabled.value = !flashEnabled.value
             }
@@ -63,20 +108,19 @@ class ScanViewModel() : ViewModel() {
 
             ScanInteraction.RetryAfterError -> {
                 errorState.value = null
-                scannerActive.value = true
-            }
-
-            ScanInteraction.Resumed -> {
-                scannerActive.value = true
-            }
-
-            ScanInteraction.Paused -> {
-                scannerActive.value = false
             }
 
             is ScanInteraction.CodeDetected -> {
                 lastDetection.value = interaction.code
                 errorState.value = null
+                viewModelScope.launch {
+                    registerScanHistoryUseCase(
+                        rawValue = interaction.code.rawValue,
+                        codeKind = interaction.code.kind.name,
+                        codeFormat = interaction.code.format.name,
+                        source = ScanHistorySource.CAMERA,
+                    )
+                }
             }
 
             is ScanInteraction.ScanFailed -> {

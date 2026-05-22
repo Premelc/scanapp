@@ -34,6 +34,7 @@ kotlin {
         commonMain.dependencies {
             implementation(projects.core.scan)
             implementation(projects.core.permission)
+            implementation(projects.core.persistence)
 
             implementation(libs.compose.runtime)
             implementation(libs.compose.foundation)
@@ -42,10 +43,12 @@ kotlin {
             implementation(libs.compose.material.icons.core)
             implementation(libs.androidx.lifecycle.runtimeCompose)
             implementation(libs.androidx.lifecycle.viewmodelCompose)
+            implementation(libs.kotlinx.datetime)
 
             implementation(libs.koin.core)
             implementation(libs.koin.compose)
             implementation(libs.koin.viewModel)
+            implementation(libs.kotlinx.coroutines.core)
 
             implementation(projects.uiComponent)
         }
