@@ -48,6 +48,7 @@ kotlin {
             implementation(projects.core.permission)
             implementation(projects.core.persistence)
             implementation(projects.feature.scan.api)
+            implementation(projects.feature.settings.api)
 
             implementation(libs.compose.runtime)
             implementation(libs.compose.foundation)

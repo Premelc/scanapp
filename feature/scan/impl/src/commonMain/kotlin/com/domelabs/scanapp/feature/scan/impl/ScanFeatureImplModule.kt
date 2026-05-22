@@ -8,6 +8,7 @@ import com.domelabs.scanapp.feature.scan.impl.domain.repository.ScanHistoryRepos
 import com.domelabs.scanapp.feature.scan.impl.domain.usecase.ClearScanHistoryUseCase
 import com.domelabs.scanapp.feature.scan.impl.domain.usecase.DeleteScanHistoryItemUseCase
 import com.domelabs.scanapp.feature.scan.impl.domain.usecase.ObserveScanHistoryUseCase
+import com.domelabs.scanapp.feature.scan.impl.domain.usecase.PlayScanFeedbackIfEnabledUseCase
 import com.domelabs.scanapp.feature.scan.impl.domain.usecase.RegisterScanHistoryUseCase
 import com.domelabs.scanapp.feature.scan.impl.presentation.model.ScanViewModel
 import org.koin.core.module.dsl.factoryOf
@@ -21,5 +22,6 @@ val scanFeatureImplModule = module {
     factoryOf(::RegisterScanHistoryUseCase)
     factoryOf(::DeleteScanHistoryItemUseCase)
     factoryOf(::ClearScanHistoryUseCase)
+    factoryOf(::PlayScanFeedbackIfEnabledUseCase)
     viewModelOf(::ScanViewModel)
 }

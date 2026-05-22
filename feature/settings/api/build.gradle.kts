@@ -9,7 +9,7 @@ plugins {
 
 kotlin {
     android {
-        namespace = "com.domelabs.scanapp.feature.scan.impl"
+        namespace = "com.domelabs.scanapp.feature.settings.api"
         compileSdk = libs.versions.android.compileSdk.get().toInt()
         minSdk = libs.versions.android.minSdk.get().toInt()
         compilerOptions {
@@ -25,34 +25,17 @@ kotlin {
         iosSimulatorArm64()
     ).forEach { iosTarget ->
         iosTarget.binaries.framework {
-            baseName = "FeatureScanImpl"
+            baseName = "FeatureSettingsApi"
             isStatic = true
         }
     }
 
     sourceSets {
         commonMain.dependencies {
-            implementation(projects.core.scan)
-            implementation(projects.core.permission)
-            implementation(projects.core.persistence)
-            implementation(projects.core.navigation)
             implementation(projects.feature.settings.impl)
 
             implementation(libs.compose.runtime)
-            implementation(libs.compose.foundation)
-            implementation(libs.compose.material3)
-            implementation(libs.compose.ui)
-            implementation(libs.compose.material.icons.core)
-            implementation(libs.androidx.lifecycle.runtimeCompose)
-            implementation(libs.androidx.lifecycle.viewmodelCompose)
-            implementation(libs.kotlinx.datetime)
-
             implementation(libs.koin.core)
-            implementation(libs.koin.compose)
-            implementation(libs.koin.viewModel)
-            implementation(libs.kotlinx.coroutines.core)
-
-            implementation(projects.uiComponent)
         }
     }
 }

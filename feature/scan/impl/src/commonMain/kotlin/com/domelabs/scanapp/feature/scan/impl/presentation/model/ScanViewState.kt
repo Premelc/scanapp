@@ -15,7 +15,6 @@ data class ScanViewState(
     val flashEnabled: Boolean = false,
     val lastDetection: ScannedCode? = null,
     val error: ScanError? = null,
-    val isScannerActive: Boolean = true,
     val isHistoryDrawerOpen: Boolean = false,
     val historyItems: List<ScanHistoryItemUi> = emptyList(),
 )

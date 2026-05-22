@@ -12,7 +12,7 @@ interface ScanHistoryRepository {
         codeKind: String,
         codeFormat: String,
         source: ScanHistorySource,
-    )
+    ): Boolean
 
     suspend fun deleteHistoryItem(id: Long)
 

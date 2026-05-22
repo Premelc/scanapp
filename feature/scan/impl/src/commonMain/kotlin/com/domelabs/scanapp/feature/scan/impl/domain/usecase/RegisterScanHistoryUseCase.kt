@@ -11,8 +11,8 @@ class RegisterScanHistoryUseCase(
         codeKind: String,
         codeFormat: String,
         source: ScanHistorySource,
-    ) {
-        repository.registerScan(
+    ): Boolean {
+        return repository.registerScan(
             rawValue = rawValue,
             codeKind = codeKind,
             codeFormat = codeFormat,

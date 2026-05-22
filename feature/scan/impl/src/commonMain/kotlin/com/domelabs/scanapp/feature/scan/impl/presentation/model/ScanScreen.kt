@@ -75,7 +75,6 @@ private fun ScanScreenContent(
             if (state.permission == ScanPermissionState.Granted) {
                 CodeScanner(
                     modifier = Modifier.fillMaxSize(),
-                    enabled = state.isScannerActive,
                     flashEnabled = state.flashEnabled,
                     onDetected = { onInteraction(ScanInteraction.CodeDetected(it)) },
                     onError = { onInteraction(ScanInteraction.ScanFailed(it)) },
@@ -95,6 +94,7 @@ private fun ScanScreenContent(
                 onToggleFlashlight = { onInteraction(ScanInteraction.ToggleFlashlight) },
                 onGallery = { onInteraction(ScanInteraction.OpenGalleryPicker) },
                 onHistory = { onInteraction(ScanInteraction.OpenHistoryDrawer) },
+                onSettings = { onInteraction(ScanInteraction.OpenSettings) },
             )
 
             state.error?.let {
@@ -111,6 +111,7 @@ private fun ScanOverlayControls(
     onToggleFlashlight: () -> Unit,
     onGallery: () -> Unit,
     onHistory: () -> Unit,
+    onSettings: () -> Unit,
 ) {
     Box(
         modifier = Modifier
@@ -121,11 +122,15 @@ private fun ScanOverlayControls(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(20.dp),
-            horizontalArrangement = Arrangement.End,
+            horizontalArrangement = Arrangement.SpaceBetween,
         ) {
             NeoBrutalTextFab(
                 label = "H",
                 onClick = onHistory,
+            )
+            NeoBrutalTextFab(
+                label = "S",
+                onClick = onSettings,
             )
         }
 

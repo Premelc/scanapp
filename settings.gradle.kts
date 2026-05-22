@@ -49,3 +49,5 @@ include(":core:scan")
 
 include(":feature:scan:api")
 include(":feature:scan:impl")
+include(":feature:settings:api")
+include(":feature:settings:impl")

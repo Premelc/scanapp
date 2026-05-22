@@ -2,6 +2,8 @@ package com.domelabs.scanapp.feature.scan.impl.presentation.model
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.domelabs.scanapp.core.navigation.NavRoute
+import com.domelabs.scanapp.core.navigation.NavigationDispatcher
 import com.domelabs.scanapp.core.permission.PermissionDispatcher
 import com.domelabs.scanapp.core.permission.PermissionState
 import com.domelabs.scanapp.core.permission.PermissionType
@@ -11,6 +13,7 @@ import com.domelabs.scanapp.feature.scan.impl.domain.model.ScanHistorySource
 import com.domelabs.scanapp.feature.scan.impl.domain.usecase.ClearScanHistoryUseCase
 import com.domelabs.scanapp.feature.scan.impl.domain.usecase.DeleteScanHistoryItemUseCase
 import com.domelabs.scanapp.feature.scan.impl.domain.usecase.ObserveScanHistoryUseCase
+import com.domelabs.scanapp.feature.scan.impl.domain.usecase.PlayScanFeedbackIfEnabledUseCase
 import com.domelabs.scanapp.feature.scan.impl.domain.usecase.RegisterScanHistoryUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -27,6 +30,7 @@ class ScanViewModel(
     private val registerScanHistoryUseCase: RegisterScanHistoryUseCase,
     private val deleteScanHistoryItemUseCase: DeleteScanHistoryItemUseCase,
     private val clearScanHistoryUseCase: ClearScanHistoryUseCase,
+    private val playScanFeedbackIfEnabledUseCase: PlayScanFeedbackIfEnabledUseCase,
 ) : ViewModel() {
     private val permissionState = MutableStateFlow(ScanPermissionState.Unknown)
     private val flashEnabled = MutableStateFlow(false)
@@ -58,7 +62,6 @@ class ScanViewModel(
             flashEnabled = baseState.flashEnabled,
             lastDetection = baseState.lastDetection,
             error = baseState.error,
-            isScannerActive = baseState.isScannerActive,
             isHistoryDrawerOpen = drawerOpen,
             historyItems = history.map { it.toUi(Clock.System.now().toEpochMilliseconds()) },
         )
@@ -80,6 +83,13 @@ class ScanViewModel(
 
             ScanInteraction.CloseHistoryDrawer -> {
                 historyDrawerOpen.value = false
+            }
+
+            ScanInteraction.OpenSettings -> {
+                viewModelScope.launch {
+                    historyDrawerOpen.value = false
+                    NavigationDispatcher.navigate(NavRoute.Settings)
+                }
             }
 
             is ScanInteraction.DeleteHistoryItem -> {
@@ -114,12 +124,15 @@ class ScanViewModel(
                 lastDetection.value = interaction.code
                 errorState.value = null
                 viewModelScope.launch {
-                    registerScanHistoryUseCase(
+                    val accepted = registerScanHistoryUseCase(
                         rawValue = interaction.code.rawValue,
                         codeKind = interaction.code.kind.name,
                         codeFormat = interaction.code.format.name,
                         source = ScanHistorySource.CAMERA,
                     )
+                    if (accepted) {
+                        playScanFeedbackIfEnabledUseCase()
+                    }
                 }
             }
 

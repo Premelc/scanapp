@@ -6,4 +6,7 @@ import kotlinx.serialization.Serializable
 sealed class NavRoute {
     @Serializable
     data object Scan : NavRoute()
+
+    @Serializable
+    data object Settings : NavRoute()
 }

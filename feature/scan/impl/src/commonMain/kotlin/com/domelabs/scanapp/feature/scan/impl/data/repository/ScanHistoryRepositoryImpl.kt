@@ -31,10 +31,10 @@ class ScanHistoryRepositoryImpl(
         codeKind: String,
         codeFormat: String,
         source: ScanHistorySource,
-    ) {
+    ): Boolean {
         val now = System.currentTimeMillis()
         val latest = localSource.getLatestByRawValue(rawValue)
-        if (latest != null && (now - latest.timestampEpochMillis) < 10_000L) return
+        if (latest != null && (now - latest.timestampEpochMillis) < 10_000L) return false
 
         localSource.insert(
             ScanHistoryEntity(
@@ -45,6 +45,7 @@ class ScanHistoryRepositoryImpl(
                 source = source.name,
             )
         )
+        return true
     }
 
     override suspend fun deleteHistoryItem(id: Long) {

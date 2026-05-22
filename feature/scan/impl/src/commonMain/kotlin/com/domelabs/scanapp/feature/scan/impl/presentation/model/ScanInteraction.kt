@@ -6,6 +6,7 @@ import com.domelabs.scanapp.core.scan.ScannedCode
 sealed interface ScanInteraction {
     data object OpenHistoryDrawer : ScanInteraction
     data object CloseHistoryDrawer : ScanInteraction
+    data object OpenSettings : ScanInteraction
     data class DeleteHistoryItem(val id: Long) : ScanInteraction
     data object ClearHistory : ScanInteraction
     data object ToggleFlashlight : ScanInteraction
