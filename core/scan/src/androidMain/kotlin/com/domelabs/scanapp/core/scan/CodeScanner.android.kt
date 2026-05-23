@@ -1,6 +1,7 @@
 package com.domelabs.scanapp.core.scan
 
 import android.annotation.SuppressLint
+import android.util.Log
 import androidx.camera.core.Camera
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageAnalysis
@@ -35,7 +36,16 @@ import com.google.mlkit.vision.barcode.common.Barcode.FORMAT_QR_CODE
 import com.google.mlkit.vision.barcode.common.Barcode.FORMAT_UPC_A
 import com.google.mlkit.vision.barcode.common.Barcode.FORMAT_UPC_E
 import com.google.mlkit.vision.common.InputImage
+import com.google.zxing.BarcodeFormat
+import com.google.zxing.BinaryBitmap
+import com.google.zxing.DecodeHintType
+import com.google.zxing.LuminanceSource
+import com.google.zxing.MultiFormatReader
+import com.google.zxing.common.HybridBinarizer
+import com.google.zxing.PlanarYUVLuminanceSource
 import java.util.concurrent.Executors
+
+private const val SCAN_LOG_TAG = "ScanCodeScanner"
 
 @Composable
 actual fun CodeScanner(
@@ -73,6 +83,17 @@ actual fun CodeScanner(
         } else {
             val providerFuture = ProcessCameraProvider.getInstance(context)
             val scanner = BarcodeScanning.getClient()
+            val dataBarReader = MultiFormatReader().apply {
+                setHints(
+                    mapOf(
+                        DecodeHintType.POSSIBLE_FORMATS to listOf(
+                            BarcodeFormat.RSS_14,
+                            BarcodeFormat.RSS_EXPANDED,
+                        ),
+                        DecodeHintType.TRY_HARDER to true,
+                    )
+                )
+            }
             val listener = Runnable {
                 val provider = runCatching { providerFuture.get() }.getOrNull()
                 if (provider == null) {
@@ -91,6 +112,7 @@ actual fun CodeScanner(
                     processFrame(
                         imageProxy = imageProxy,
                         scanner = scanner,
+                        dataBarReader = dataBarReader,
                         cooldownMillis = cooldownMillis,
                         lastDetectedAt = lastDetectedAt,
                         onDetectedTimestampUpdate = { lastDetectedAt = it },
@@ -135,6 +157,7 @@ actual fun CodeScanner(
 private fun processFrame(
     imageProxy: androidx.camera.core.ImageProxy,
     scanner: com.google.mlkit.vision.barcode.BarcodeScanner,
+    dataBarReader: MultiFormatReader,
     cooldownMillis: Long,
     lastDetectedAt: Long,
     onDetectedTimestampUpdate: (Long) -> Unit,
@@ -150,25 +173,137 @@ private fun processFrame(
     val image = InputImage.fromMediaImage(mediaImage, imageProxy.imageInfo.rotationDegrees)
     scanner.process(image)
         .addOnSuccessListener { barcodes ->
-            val barcode = barcodes.firstOrNull() ?: return@addOnSuccessListener
-            val rawValue = barcode.rawValue ?: return@addOnSuccessListener
-            val now = System.currentTimeMillis()
-            if (now - lastDetectedAt < cooldownMillis) return@addOnSuccessListener
-            onDetectedTimestampUpdate(now)
-            onDetected(
-                ScannedCode(
-                    kind = barcode.format.toCodeKind(),
-                    format = barcode.format.toCodeFormat(),
-                    rawValue = rawValue,
+            val mlkitAccepted = if (barcodes.isNotEmpty()) {
+                val barcode = barcodes.firstOrNull()
+                if (barcode == null) {
+                    false
+                } else {
+                    val format = barcode.format.toCodeFormat()
+                    val kind = barcode.format.toCodeKind()
+                    val rawValue = barcode.rawValue
+                    val rawBytesLength = barcode.rawBytes?.size ?: 0
+
+                    Log.d(
+                        SCAN_LOG_TAG,
+                        "Detected barcode format=$format kind=$kind rawValuePresent=${!rawValue.isNullOrBlank()} rawBytes=$rawBytesLength",
+                    )
+
+                    if (rawValue.isNullOrBlank()) {
+                        Log.w(
+                            SCAN_LOG_TAG,
+                            "Dropping MLKit detection because rawValue is null/blank for format=$format (rawBytes=$rawBytesLength)",
+                        )
+                        false
+                    } else {
+                        val now = System.currentTimeMillis()
+                        if (now - lastDetectedAt < cooldownMillis) {
+                            Log.d(
+                                SCAN_LOG_TAG,
+                                "Cooldown drop for format=$format elapsed=${now - lastDetectedAt}ms cooldown=${cooldownMillis}ms",
+                            )
+                            true
+                        } else {
+                            onDetectedTimestampUpdate(now)
+                            Log.d(
+                                SCAN_LOG_TAG,
+                                "Accepted detection format=$format kind=$kind valueLength=${rawValue.length}",
+                            )
+                            onDetected(
+                                ScannedCode(
+                                    kind = kind,
+                                    format = format,
+                                    rawValue = rawValue,
+                                )
+                            )
+                            true
+                        }
+                    }
+                }
+            } else {
+                false
+            }
+
+            if (mlkitAccepted) return@addOnSuccessListener
+
+            val dataBarResult = imageProxy.tryDecodeGs1DataBar(dataBarReader)
+            if (dataBarResult != null) {
+                val (format, rawValue) = dataBarResult
+                val now = System.currentTimeMillis()
+                if (now - lastDetectedAt < cooldownMillis) {
+                    Log.d(
+                        SCAN_LOG_TAG,
+                        "Cooldown drop for ZXing GS1 format=$format elapsed=${now - lastDetectedAt}ms cooldown=${cooldownMillis}ms",
+                    )
+                    return@addOnSuccessListener
+                }
+                onDetectedTimestampUpdate(now)
+                Log.d(
+                    SCAN_LOG_TAG,
+                    "Accepted ZXing GS1 detection format=$format valueLength=${rawValue.length}",
                 )
-            )
+                onDetected(
+                    ScannedCode(
+                        kind = CodeKind.BARCODE,
+                        format = format,
+                        rawValue = rawValue,
+                    )
+                )
+            }
         }
         .addOnFailureListener {
+            Log.e(SCAN_LOG_TAG, "MLKit scan failed: ${it.message}", it)
             onError(ScanError.AnalysisFailed(it.message))
         }
         .addOnCompleteListener {
             imageProxy.close()
         }
+}
+
+private fun androidx.camera.core.ImageProxy.tryDecodeGs1DataBar(
+    dataBarReader: MultiFormatReader,
+): Pair<CodeFormat, String>? {
+    return runCatching {
+        val yPlane = planes.firstOrNull() ?: return null
+        val yBuffer = yPlane.buffer
+        val yBytes = ByteArray(yBuffer.remaining())
+        yBuffer.get(yBytes)
+        val width = width
+        val height = height
+
+        var source: LuminanceSource = PlanarYUVLuminanceSource(
+            yBytes,
+            width,
+            height,
+            0,
+            0,
+            width,
+            height,
+            false,
+        )
+
+        val rotationTurns = ((imageInfo.rotationDegrees % 360) + 360) % 360 / 90
+        repeat(rotationTurns) {
+            if (source.isRotateSupported) {
+                source = source.rotateCounterClockwise()
+            }
+        }
+
+        val result = dataBarReader.decodeWithState(BinaryBitmap(HybridBinarizer(source)))
+        dataBarReader.reset()
+
+        val format = result.barcodeFormat.toGs1CodeFormat() ?: return null
+        val value = result.text.orEmpty()
+        if (value.isBlank()) return null
+        format to value
+    }.onFailure {
+        dataBarReader.reset()
+    }.getOrNull()
+}
+
+private fun BarcodeFormat.toGs1CodeFormat(): CodeFormat? = when (this) {
+    BarcodeFormat.RSS_14 -> CodeFormat.GS1_DATABAR
+    BarcodeFormat.RSS_EXPANDED -> CodeFormat.GS1_DATABAR_EXPANDED
+    else -> null
 }
 
 private fun Int.toCodeFormat(): CodeFormat = when (this) {

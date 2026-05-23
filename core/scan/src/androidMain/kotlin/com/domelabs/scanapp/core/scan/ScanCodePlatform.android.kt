@@ -98,6 +98,8 @@ private fun String.toBarcodeFormat(): BarcodeFormat? = when (this) {
     "AZTEC" -> BarcodeFormat.AZTEC
     "DATA_MATRIX" -> BarcodeFormat.DATA_MATRIX
     "PDF_417" -> BarcodeFormat.PDF_417
+    "GS1_DATABAR" -> BarcodeFormat.RSS_14
+    "GS1_DATABAR_EXPANDED" -> BarcodeFormat.RSS_EXPANDED
     "CODE_39" -> BarcodeFormat.CODE_39
     "CODE_93" -> BarcodeFormat.CODE_93
     "CODE_128" -> BarcodeFormat.CODE_128

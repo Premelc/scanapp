@@ -228,6 +228,8 @@ private fun InfoPill(
 private fun formatLabel(codeFormat: String): String {
     return when (codeFormat) {
         "PDF_417" -> "PDF-417"
+        "GS1_DATABAR" -> "GS1 DataBar"
+        "GS1_DATABAR_EXPANDED" -> "GS1 DataBar Expanded"
         else -> codeFormat.replace('_', ' ')
     }
 }

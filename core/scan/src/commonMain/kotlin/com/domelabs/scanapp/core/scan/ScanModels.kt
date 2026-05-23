@@ -10,6 +10,8 @@ enum class CodeFormat {
     AZTEC,
     DATA_MATRIX,
     PDF_417,
+    GS1_DATABAR,
+    GS1_DATABAR_EXPANDED,
     CODE_39,
     CODE_93,
     CODE_128,
