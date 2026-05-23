@@ -11,24 +11,23 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.domelabs.scanapp.core.scan.rememberCodeShareActions
 import com.domelabs.scanapp.uiComponent.components.NeoBrutalCard
-import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun ShareScanModal(
     kind: String,
     rawValue: String,
+    isPreparingShareImage: Boolean,
+    onShareImage: () -> Unit,
     onDismiss:()->Unit,
 ){
     val shareActions = rememberCodeShareActions()
-    val scope = rememberCoroutineScope()
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -46,11 +45,9 @@ internal fun ShareScanModal(
             ShareActionRow(
                 title = "Share as image",
                 description = "Share rendered ${kind.lowercase()} image",
-                enabled = true,
+                enabled = !isPreparingShareImage,
                 onClick = {
-                    scope.launch {
-
-                    }
+                    onShareImage()
                 },
             )
             ShareActionRow(

@@ -1,13 +1,15 @@
 package com.domelabs.scanapp.feature.scan.impl.presentation.model.history
 
+import com.domelabs.scanapp.core.scan.CodeFormat
+import com.domelabs.scanapp.core.scan.CodeKind
 import com.domelabs.scanapp.feature.scan.impl.domain.model.ScanHistoryItem
 import kotlin.math.max
 
 data class ScanHistoryItemUi(
     val id: Long,
     val rawValue: String,
-    val codeKind: String,
-    val codeFormat: String,
+    val codeKind: CodeKind,
+    val codeFormat: CodeFormat,
     val source: String,
     val scannedAtEpochMillis: Long,
     val subtitle: String,

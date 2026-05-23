@@ -1,6 +1,8 @@
 package com.domelabs.scanapp.feature.scan.impl.data.repository
 
 import com.domelabs.scanapp.core.persistence.database.entity.ScanHistoryEntity
+import com.domelabs.scanapp.core.scan.CodeFormat
+import com.domelabs.scanapp.core.scan.CodeKind
 import com.domelabs.scanapp.feature.scan.impl.data.source.ScanHistoryLocalSource
 import com.domelabs.scanapp.feature.scan.impl.domain.model.ScanHistoryItem
 import com.domelabs.scanapp.feature.scan.impl.domain.model.ScanHistorySource
@@ -21,8 +23,8 @@ class ScanHistoryRepositoryImpl(
                     id = entity.id,
                     timestampEpochMillis = entity.timestampEpochMillis,
                     rawValue = entity.rawValue,
-                    codeKind = entity.codeKind,
-                    codeFormat = entity.codeFormat,
+                    codeKind = CodeKind.valueOf(entity.codeKind),
+                    codeFormat = CodeFormat.valueOf(entity.codeFormat),
                     source = entity.source.toScanHistorySource(),
                 )
             }
@@ -35,8 +37,8 @@ class ScanHistoryRepositoryImpl(
                     id = entity.id,
                     timestampEpochMillis = entity.timestampEpochMillis,
                     rawValue = entity.rawValue,
-                    codeKind = entity.codeKind,
-                    codeFormat = entity.codeFormat,
+                    codeKind = CodeKind.valueOf(entity.codeKind),
+                    codeFormat = CodeFormat.valueOf(entity.codeFormat),
                     source = entity.source.toScanHistorySource(),
                 )
             }
@@ -63,8 +65,8 @@ class ScanHistoryRepositoryImpl(
             id = entity.id,
             timestampEpochMillis = entity.timestampEpochMillis,
             rawValue = entity.rawValue,
-            codeKind = entity.codeKind,
-            codeFormat = entity.codeFormat,
+            codeKind = CodeKind.valueOf(entity.codeKind),
+            codeFormat = CodeFormat.valueOf(entity.codeFormat),
             source = ScanHistorySource.valueOf(entity.source)
         )
     }

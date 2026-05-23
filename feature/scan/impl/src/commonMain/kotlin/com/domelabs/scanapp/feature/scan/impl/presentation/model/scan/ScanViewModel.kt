@@ -10,6 +10,7 @@ import com.domelabs.scanapp.core.notification.AppSnackbarKind
 import com.domelabs.scanapp.core.permission.PermissionDispatcher
 import com.domelabs.scanapp.core.permission.PermissionState
 import com.domelabs.scanapp.core.permission.PermissionType
+import com.domelabs.scanapp.core.scan.CodeKind
 import com.domelabs.scanapp.core.scan.ScanError
 import com.domelabs.scanapp.core.scan.ScannedCode
 import com.domelabs.scanapp.feature.scan.impl.domain.model.ScanHistorySource
@@ -128,14 +129,14 @@ class ScanViewModel(
 
                         AppSnackbarDispatcher.dispatch(
                             AppSnackbarEvent(
-                                title = if (accepted.codeKind == "QR") {
+                                title = if (accepted.codeKind == CodeKind.QR) {
                                     "QR code successfully scanned"
                                 } else {
                                     "Barcode successfully scanned"
                                 },
                                 subtitle = interaction.code.rawValue,
                                 actionLabel = "Details",
-                                kind = if (accepted.codeKind == "QR") {
+                                kind = if (accepted.codeKind == CodeKind.QR) {
                                     AppSnackbarKind.QrSuccess
                                 } else {
                                     AppSnackbarKind.BarcodeSuccess

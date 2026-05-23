@@ -1,33 +1,27 @@
 package com.domelabs.scanapp.core.capturable
 
-import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Box
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.ExperimentalComposeUiApi
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
-import kotlinx.coroutines.launch
 
-@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 actual fun CapturableContent(
+    state: CapturableState,
     content: @Composable () -> Unit,
-    captureButton: @Composable ((onClick: () -> Unit) -> Unit),
     modifier: Modifier,
 ) {
-    val scope = rememberCoroutineScope()
-    Column(
-        modifier = modifier,
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Column(modifier = Modifier) {
-            content()
+    LaunchedEffect(state) {
+        state.captureRequests.collect { onResult ->
+            onResult(
+                CapturableResult.Error(
+                    NotImplementedError("iOS capture is not implemented yet."),
+                )
+            )
         }
+    }
 
-        captureButton {
-            scope.launch {
-                // TODO(IOS MISSING)
-            }
-        }
+    Box(modifier = modifier) {
+        content()
     }
 }

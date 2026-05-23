@@ -1,12 +1,11 @@
 package com.domelabs.scanapp.feature.scan.impl.presentation.model.details
 
-import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -15,10 +14,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -27,28 +24,28 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
-import com.domelabs.scanapp.core.navigation.NavRoute
-import com.domelabs.scanapp.core.navigation.NavigationDispatcher
-import com.domelabs.scanapp.core.scan.GeneratedCodeMatrix
+import com.domelabs.scanapp.core.scan.CodeKind
+import com.domelabs.scanapp.core.scan.ScanCodePlatform
+import com.domelabs.scanapp.core.scan.rememberCodeShareActions
 import com.domelabs.scanapp.feature.scan.impl.domain.model.ScanHistoryItem
+import com.domelabs.scanapp.uiComponent.components.LocalScreenMetrics
 import com.domelabs.scanapp.uiComponent.components.NeoBrutalButton
 import com.domelabs.scanapp.uiComponent.components.NeoBrutalButtonStyle
 import com.domelabs.scanapp.uiComponent.components.NeoBrutalCard
 import com.domelabs.scanapp.uiComponent.theme.ScanAppTheme
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.number
 import kotlinx.datetime.toLocalDateTime
+import org.jetbrains.compose.resources.decodeToImageBitmap
 import org.jetbrains.compose.resources.painterResource
-import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 import kotlin.time.Instant
@@ -73,8 +70,17 @@ private fun ScanDetailsContent(
     historyItem: ScanHistoryItem,
     onInteraction: (ScanDetailsInteraction) -> Unit,
 ) {
+    val screenMetrics = LocalScreenMetrics.current
     val scope = rememberCoroutineScope()
-
+    val shareActions = rememberCodeShareActions()
+    var isPreparingShareImage by remember { mutableStateOf(false) }
+    val codeByteArray = remember(historyItem.rawValue, historyItem.codeFormat) {
+        ScanCodePlatform.generatePng(
+            rawValue = historyItem.rawValue,
+            codeFormat = historyItem.codeFormat.name,
+            sizePx = screenMetrics.widthPx
+        )
+    }
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -109,10 +115,13 @@ private fun ScanDetailsContent(
         }
 
         NeoBrutalCard(modifier = Modifier.fillMaxWidth()) {
-            QrCodePicture(
-                code = historyItem.rawValue,
-                modifier = Modifier.fillMaxWidth().padding(20.dp).aspectRatio(1f)
-            )
+            codeByteArray?.let {
+                Image(
+                    modifier = Modifier,
+                    bitmap = it.decodeToImageBitmap(),
+                    contentDescription = null
+                )
+            }
         }
 
         Text(
@@ -124,12 +133,12 @@ private fun ScanDetailsContent(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             InfoPill(
-                label = historyItem.codeKind,
+                label = historyItem.codeKind.name,
                 container = MaterialTheme.colorScheme.primaryContainer,
                 content = MaterialTheme.colorScheme.onPrimaryContainer,
             )
             InfoPill(
-                label = formatLabel(historyItem.codeFormat),
+                label = formatLabel(historyItem.codeFormat.name),
                 container = MaterialTheme.colorScheme.secondaryContainer,
                 content = MaterialTheme.colorScheme.onSecondaryContainer,
             )
@@ -142,14 +151,41 @@ private fun ScanDetailsContent(
 
         DetailRow("Raw value", historyItem.rawValue, singleLine = false)
         DetailRow("Scanned at", formatScannedAt(historyItem.timestampEpochMillis))
-    }
 
-    if (showShareSheet) {
-        ShareScanModal(
-            onDismiss = { },
-            kind = historyItem.codeKind,
-            rawValue = historyItem.rawValue,
-        )
+        if (showShareSheet) {
+            ShareScanModal(
+                onDismiss = {
+                    if (!isPreparingShareImage) {
+                        onInteraction(ScanDetailsInteraction.DismissShare)
+                    }
+                },
+                kind = historyItem.codeKind.name,
+                rawValue = historyItem.rawValue,
+                isPreparingShareImage = isPreparingShareImage,
+                onShareImage = {
+                    if (isPreparingShareImage) return@ShareScanModal
+                    isPreparingShareImage = true
+                    // Close sheet first so bottom-sheet scrim is not included in the capture.
+                    onInteraction(ScanDetailsInteraction.DismissShare)
+                    scope.launch {
+                        val fallbackBytes = withContext(Dispatchers.Default) {
+                            ScanCodePlatform.generatePng(
+                                rawValue = historyItem.rawValue,
+                                codeFormat = historyItem.codeFormat.name,
+                                sizePx = if (historyItem.codeKind == CodeKind.QR) 1200 else 1600,
+                            )
+                        }
+                        if (fallbackBytes != null) {
+                            shareActions.shareImage(
+                                pngBytes = fallbackBytes,
+                                fileName = "scan-${historyItem.codeFormat.name.lowercase()}.png",
+                            )
+                        }
+                        isPreparingShareImage = false
+                    }
+                },
+            )
+        }
     }
 }
 
