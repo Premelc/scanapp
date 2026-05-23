@@ -10,7 +10,9 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.systemBarsPadding
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -29,6 +31,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.domelabs.scanapp.core.scan.CodeFormat
 import com.domelabs.scanapp.core.scan.CodeKind
 import com.domelabs.scanapp.core.scan.ScanCodePlatform
 import com.domelabs.scanapp.core.scan.rememberCodeShareActions
@@ -75,9 +78,9 @@ private fun ScanDetailsContent(
     val shareActions = rememberCodeShareActions()
     var isPreparingShareImage by remember { mutableStateOf(false) }
     val codeByteArray = remember(historyItem.rawValue, historyItem.codeFormat) {
-        ScanCodePlatform.generatePng(
+        generateDisplayPng(
             rawValue = historyItem.rawValue,
-            codeFormat = historyItem.codeFormat.name,
+            codeFormat = historyItem.codeFormat,
             sizePx = screenMetrics.widthPx
         )
     }
@@ -85,7 +88,8 @@ private fun ScanDetailsContent(
         modifier = Modifier
             .fillMaxSize()
             .systemBarsPadding()
-            .padding(16.dp),
+            .padding(16.dp)
+            .verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         Row(
@@ -169,9 +173,9 @@ private fun ScanDetailsContent(
                     onInteraction(ScanDetailsInteraction.DismissShare)
                     scope.launch {
                         val fallbackBytes = withContext(Dispatchers.Default) {
-                            ScanCodePlatform.generatePng(
+                            generateDisplayPng(
                                 rawValue = historyItem.rawValue,
-                                codeFormat = historyItem.codeFormat.name,
+                                codeFormat = historyItem.codeFormat,
                                 sizePx = if (historyItem.codeKind == CodeKind.QR) 1200 else 1600,
                             )
                         }
@@ -243,4 +247,29 @@ private fun formatScannedAt(epochMillis: Long): String {
 
     return "${dt.year}-${dt.month.number.twoDigits()}-${dt.day.twoDigits()} " +
             "${dt.hour.twoDigits()}:${dt.minute.twoDigits()}:${dt.second.twoDigits()}"
+}
+
+private fun generateDisplayPng(
+    rawValue: String,
+    codeFormat: CodeFormat,
+    sizePx: Int,
+): ByteArray? {
+    val direct = ScanCodePlatform.generatePng(
+        rawValue = rawValue,
+        codeFormat = codeFormat.name,
+        sizePx = sizePx,
+    )
+    if (direct != null) return direct
+
+    val isGs1DataBar = codeFormat == CodeFormat.GS1_DATABAR ||
+            codeFormat == CodeFormat.GS1_DATABAR_EXPANDED
+    if (!isGs1DataBar) return null
+
+    // Current generator stack does not support writing GS1 DataBar directly.
+    // Use CODE_128 as a display/share fallback to keep a visual representation.
+    return ScanCodePlatform.generatePng(
+        rawValue = rawValue,
+        codeFormat = CodeFormat.CODE_128.name,
+        sizePx = sizePx,
+    )
 }

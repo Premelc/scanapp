@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -17,75 +18,14 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewModelScope
-import com.domelabs.scanapp.core.navigation.NavRoute
-import com.domelabs.scanapp.core.navigation.NavigationDispatcher
-import com.domelabs.scanapp.feature.scan.impl.domain.usecase.ClearScanHistoryUseCase
-import com.domelabs.scanapp.feature.scan.impl.domain.usecase.DeleteScanHistoryItemUseCase
-import com.domelabs.scanapp.feature.scan.impl.domain.usecase.ObserveScanHistoryUseCase
 import com.domelabs.scanapp.uiComponent.components.NeoBrutalButton
 import com.domelabs.scanapp.uiComponent.components.NeoBrutalButtonStyle
 import com.domelabs.scanapp.uiComponent.components.NeoBrutalCard
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.launch
-import kotlin.time.Clock
+import com.domelabs.scanapp.uiComponent.components.shadow.LazyShadowColumn
 import org.koin.compose.koinInject
-
-data class ScanHistoryListViewState(
-    val historyItems: List<ScanHistoryItemUi> = emptyList(),
-)
-
-class ScanHistoryScreenViewModel(
-    observeScanHistoryUseCase: ObserveScanHistoryUseCase,
-    private val deleteScanHistoryItemUseCase: DeleteScanHistoryItemUseCase,
-    private val clearScanHistoryUseCase: ClearScanHistoryUseCase,
-) : ViewModel() {
-    val viewState: StateFlow<ScanHistoryListViewState> = observeScanHistoryUseCase()
-        .map { history ->
-            ScanHistoryListViewState(
-                historyItems = history.map { it.toUi(Clock.System.now().toEpochMilliseconds()) },
-            )
-        }
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5_000L),
-            initialValue = ScanHistoryListViewState(),
-        )
-
-    fun onDelete(id: Long) {
-        viewModelScope.launch {
-            deleteScanHistoryItemUseCase(id)
-        }
-    }
-
-    fun onClear() {
-        viewModelScope.launch {
-            clearScanHistoryUseCase()
-        }
-    }
-
-    fun onBack() {
-        viewModelScope.launch {
-            NavigationDispatcher.back()
-        }
-    }
-
-    fun openDetails(item: ScanHistoryItemUi) {
-        viewModelScope.launch {
-            NavigationDispatcher.navigate(
-                NavRoute.ScanDetails(
-                    id = item.id
-                )
-            )
-        }
-    }
-}
 
 @Composable
 fun ScanHistoryScreen(
@@ -96,12 +36,11 @@ fun ScanHistoryScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .systemBarsPadding()
-            .padding(16.dp),
+            .systemBarsPadding(),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         Row(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
@@ -119,6 +58,7 @@ fun ScanHistoryScreen(
         }
 
         Text(
+            modifier = Modifier.padding(horizontal = 16.dp),
             text = "History",
             style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold),
         )
@@ -131,9 +71,10 @@ fun ScanHistoryScreen(
                 )
             }
         } else {
-            LazyColumn(
+            LazyShadowColumn(
                 modifier = Modifier.fillMaxSize(),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
+                contentPadding = PaddingValues(horizontal = 12.dp)
             ) {
                 items(state.historyItems, key = { it.id }) { item ->
                     NeoBrutalCard(
@@ -156,6 +97,8 @@ fun ScanHistoryScreen(
                                 Text(
                                     text = item.rawValue,
                                     style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
+                                    maxLines = 3,
+                                    overflow = TextOverflow.Ellipsis,
                                 )
                                 Text(
                                     text = item.subtitle,

@@ -28,6 +28,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -36,7 +37,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.domelabs.scanapp.core.media.MediaItem
+import com.domelabs.scanapp.core.media.compress
+import com.domelabs.scanapp.core.media.rememberMediaPicker
 import com.domelabs.scanapp.core.scan.CodeScanner
+import com.domelabs.scanapp.core.scan.rememberGalleryCodeScanner
 import com.domelabs.scanapp.feature.scan.impl.presentation.model.ScanMenuDrawerLayout
 import com.domelabs.scanapp.uiComponent.components.NeoBrutalButton
 import com.domelabs.scanapp.uiComponent.components.NeoBrutalButtonStyle
@@ -45,6 +50,7 @@ import com.domelabs.scanapp.uiComponent.modifier.neoBrutalStyle
 import com.domelabs.scanapp.uiComponent.modifier.neoBrutalBorder
 import com.domelabs.scanapp.uiComponent.theme.ScanAppTheme
 import org.koin.compose.koinInject
+import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 
 @Composable
@@ -52,6 +58,20 @@ fun ScanScreen(
     viewModel: ScanViewModel = koinInject(),
 ) {
     val state by viewModel.viewState.collectAsStateWithLifecycle()
+    val scope = rememberCoroutineScope()
+    val galleryCodeScanner = rememberGalleryCodeScanner()
+    val openGalleryPicker = rememberMediaPicker { mediaItems ->
+        val image = mediaItems.firstOrNull { it is MediaItem.Image } as? MediaItem.Image ?: return@rememberMediaPicker
+        scope.launch {
+            val preparedImage = image.compress()
+            val scanned = galleryCodeScanner.scanCodeFromImageUri(preparedImage.uri)
+            if (scanned == null) {
+                viewModel.onInteraction(ScanInteraction.GalleryCodeNotFound)
+            } else {
+                viewModel.onInteraction(ScanInteraction.GalleryCodeDetected(scanned))
+            }
+        }
+    }
 
     LaunchedEffect(Unit) {
         viewModel.onInteraction(ScanInteraction.RequestCameraPermission)
@@ -60,6 +80,7 @@ fun ScanScreen(
     ScanScreenContent(
         state = state,
         onInteraction = viewModel::onInteraction,
+        openGalleryPicker = openGalleryPicker,
     )
 }
 
@@ -67,6 +88,7 @@ fun ScanScreen(
 private fun ScanScreenContent(
     state: ScanViewState,
     onInteraction: (ScanInteraction) -> Unit,
+    openGalleryPicker: () -> Unit,
 ) {
     ScanMenuDrawerLayout(
         isMenuDrawerOpen = state.isMenuDrawerOpen,
@@ -98,7 +120,7 @@ private fun ScanScreenContent(
                 permissionGranted = state.permission == ScanPermissionState.Granted,
                 flashEnabled = state.flashEnabled,
                 onToggleFlashlight = { onInteraction(ScanInteraction.ToggleFlashlight) },
-                onGallery = { onInteraction(ScanInteraction.OpenGalleryPicker) },
+                onGallery = openGalleryPicker,
                 onHistory = { onInteraction(ScanInteraction.NavigateToHistory) },
                 onSettings = { onInteraction(ScanInteraction.OpenMenuDrawer) },
             )

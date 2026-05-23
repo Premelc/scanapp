@@ -8,7 +8,6 @@ import androidx.exifinterface.media.ExifInterface
 import androidx.core.content.FileProvider
 import androidx.core.graphics.scale
 import androidx.core.net.toUri
-import org.koin.mp.KoinPlatformTools
 import java.io.ByteArrayInputStream
 import java.io.File
 import java.io.InputStream
@@ -37,7 +36,7 @@ actual suspend fun compressAndScaleImage(
     maxDimension: Int,
     compressQuality: Int,
 ): String? {
-    val context = KoinPlatformTools.defaultContext().get().get<Context>()
+    val context = platformAndroidContext()
 
     return try {
         // Open input stream from URI

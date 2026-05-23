@@ -34,6 +34,7 @@ kotlin {
             implementation(libs.androidx.activity.compose)
             implementation(libs.ktor.client.okhttp)
             implementation(libs.compose.ui)
+            implementation(libs.androidx.exifinterface)
         }
         commonMain.dependencies {
             implementation(libs.kotlinx.coroutines.core)

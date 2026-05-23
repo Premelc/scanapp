@@ -33,6 +33,7 @@ kotlin {
     sourceSets {
         commonMain.dependencies {
             implementation(projects.core.scan)
+            implementation(projects.core.file)
             implementation(projects.core.permission)
             implementation(projects.core.persistence)
             implementation(projects.core.navigation)

@@ -111,6 +111,26 @@ class ScanViewModel(
 
             ScanInteraction.OpenGalleryPicker -> Unit
 
+            ScanInteraction.GalleryCodeNotFound -> {
+                viewModelScope.launch {
+                    AppSnackbarDispatcher.dispatch(
+                        AppSnackbarEvent(
+                            title = "No code found in selected image",
+                            kind = AppSnackbarKind.Warning,
+                            durationMillis = 3_500L,
+                        )
+                    )
+                }
+            }
+
+            is ScanInteraction.GalleryCodeDetected -> {
+                lastDetection.value = interaction.code
+                errorState.value = null
+                viewModelScope.launch {
+                    processDetectedCode(interaction.code, ScanHistorySource.GALLERY)
+                }
+            }
+
             ScanInteraction.RetryAfterError -> {
                 errorState.value = null
             }
@@ -119,40 +139,7 @@ class ScanViewModel(
                 lastDetection.value = interaction.code
                 errorState.value = null
                 viewModelScope.launch {
-                    val accepted = registerScanHistoryUseCase(
-                        rawValue = interaction.code.rawValue,
-                        codeKind = interaction.code.kind.name,
-                        codeFormat = interaction.code.format.name,
-                        source = ScanHistorySource.CAMERA,
-                    )
-                    if (accepted != null) {
-
-                        AppSnackbarDispatcher.dispatch(
-                            AppSnackbarEvent(
-                                title = if (accepted.codeKind == CodeKind.QR) {
-                                    "QR code successfully scanned"
-                                } else {
-                                    "Barcode successfully scanned"
-                                },
-                                subtitle = interaction.code.rawValue,
-                                actionLabel = "Details",
-                                kind = if (accepted.codeKind == CodeKind.QR) {
-                                    AppSnackbarKind.QrSuccess
-                                } else {
-                                    AppSnackbarKind.BarcodeSuccess
-                                },
-                                durationMillis = 5_000L,
-                                onAction = {
-                                    NavigationDispatcher.navigate(
-                                        NavRoute.ScanDetails(
-                                            id = accepted.id
-                                        )
-                                    )
-                                },
-                            )
-                        )
-                        playScanFeedbackIfEnabledUseCase()
-                    }
+                    processDetectedCode(interaction.code, ScanHistorySource.CAMERA)
                 }
             }
 
@@ -171,6 +158,45 @@ class ScanViewModel(
                     PermissionState.DENIED -> ScanPermissionState.Denied
                 }
             }
+        }
+    }
+
+    private suspend fun processDetectedCode(
+        code: ScannedCode,
+        source: ScanHistorySource,
+    ) {
+        val accepted = registerScanHistoryUseCase(
+            rawValue = code.rawValue,
+            codeKind = code.kind.name,
+            codeFormat = code.format.name,
+            source = source,
+        )
+        if (accepted != null) {
+            AppSnackbarDispatcher.dispatch(
+                AppSnackbarEvent(
+                    title = if (accepted.codeKind == CodeKind.QR) {
+                        "QR code successfully scanned"
+                    } else {
+                        "Barcode successfully scanned"
+                    },
+                    subtitle = code.rawValue,
+                    actionLabel = "Details",
+                    kind = if (accepted.codeKind == CodeKind.QR) {
+                        AppSnackbarKind.QrSuccess
+                    } else {
+                        AppSnackbarKind.BarcodeSuccess
+                    },
+                    durationMillis = 5_000L,
+                    onAction = {
+                        NavigationDispatcher.navigate(
+                            NavRoute.ScanDetails(
+                                id = accepted.id
+                            )
+                        )
+                    },
+                )
+            )
+            playScanFeedbackIfEnabledUseCase()
         }
     }
 }

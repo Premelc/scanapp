@@ -2,7 +2,6 @@ package com.domelabs.scanapp.core.media
 
 import android.content.Context
 import androidx.core.net.toUri
-import org.koin.mp.KoinPlatformTools
 import java.io.File
 
 actual fun MediaItem.toFile(): MultiplatformFile = AndroidFileFromPath(
@@ -18,7 +17,7 @@ class AndroidFileFromPath(
     private val fileName: String = path.substringAfterLast("/"),
     override val contentType: String,
 ) : MultiplatformFile {
-    val context = KoinPlatformTools.defaultContext().get().get<Context>()
+    val context = platformAndroidContext()
 
     override val name: String
         get() = fileName
