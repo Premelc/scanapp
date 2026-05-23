@@ -47,6 +47,7 @@ include(":core:notification")
 include(":core:utils")
 include(":core:file")
 include(":core:scan")
+include(":core:capturable")
 
 include(":feature:scan:api")
 include(":feature:scan:impl")

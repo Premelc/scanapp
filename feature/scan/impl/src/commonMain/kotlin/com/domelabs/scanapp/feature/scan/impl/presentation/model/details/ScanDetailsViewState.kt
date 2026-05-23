@@ -1,5 +1,8 @@
 package com.domelabs.scanapp.feature.scan.impl.presentation.model.details
+
+import com.domelabs.scanapp.feature.scan.impl.domain.model.ScanHistoryItem
+
 data class ScanDetailsViewState(
-    val matrixState: CodePreviewState = CodePreviewState.Loading,
-    val scannedAtLabel: String = "",
+    val showShareSheet: Boolean = false,
+    val historyItem: ScanHistoryItem? = null,
 )

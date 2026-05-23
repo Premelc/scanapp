@@ -21,7 +21,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import kotlin.time.Clock
 
 class ScanViewModel(
     private val registerScanHistoryUseCase: RegisterScanHistoryUseCase,
@@ -115,20 +114,6 @@ class ScanViewModel(
                 errorState.value = null
             }
 
-            is ScanInteraction.OpenScanDetails -> {
-                viewModelScope.launch {
-                    NavigationDispatcher.navigate(
-                        NavRoute.ScanDetails(
-                            rawValue = interaction.rawValue,
-                            codeKind = interaction.codeKind,
-                            codeFormat = interaction.codeFormat,
-                            source = interaction.source,
-                            scannedAtEpochMillis = interaction.scannedAtEpochMillis,
-                        )
-                    )
-                }
-            }
-
             is ScanInteraction.CodeDetected -> {
                 lastDetection.value = interaction.code
                 errorState.value = null
@@ -139,21 +124,18 @@ class ScanViewModel(
                         codeFormat = interaction.code.format.name,
                         source = ScanHistorySource.CAMERA,
                     )
-                    if (accepted) {
-                        val codeKind = interaction.code.kind.name
-                        val codeFormat = interaction.code.format.name
-                        val scannedAt = Clock.System.now().toEpochMilliseconds()
+                    if (accepted != null) {
 
                         AppSnackbarDispatcher.dispatch(
                             AppSnackbarEvent(
-                                title = if (codeKind == "QR") {
+                                title = if (accepted.codeKind == "QR") {
                                     "QR code successfully scanned"
                                 } else {
                                     "Barcode successfully scanned"
                                 },
                                 subtitle = interaction.code.rawValue,
                                 actionLabel = "Details",
-                                kind = if (codeKind == "QR") {
+                                kind = if (accepted.codeKind == "QR") {
                                     AppSnackbarKind.QrSuccess
                                 } else {
                                     AppSnackbarKind.BarcodeSuccess
@@ -162,11 +144,7 @@ class ScanViewModel(
                                 onAction = {
                                     NavigationDispatcher.navigate(
                                         NavRoute.ScanDetails(
-                                            rawValue = interaction.code.rawValue,
-                                            codeKind = codeKind,
-                                            codeFormat = codeFormat,
-                                            source = ScanHistorySource.CAMERA.name,
-                                            scannedAtEpochMillis = scannedAt,
+                                            id = accepted.id
                                         )
                                     )
                                 },

@@ -37,6 +37,7 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.domelabs.scanapp.core.scan.CodeScanner
+import com.domelabs.scanapp.feature.scan.impl.presentation.model.ScanMenuDrawerLayout
 import com.domelabs.scanapp.uiComponent.components.NeoBrutalButton
 import com.domelabs.scanapp.uiComponent.components.NeoBrutalButtonStyle
 import com.domelabs.scanapp.uiComponent.components.NeoBrutalCard
@@ -67,7 +68,7 @@ private fun ScanScreenContent(
     state: ScanViewState,
     onInteraction: (ScanInteraction) -> Unit,
 ) {
-    _root_ide_package_.com.domelabs.scanapp.feature.scan.impl.presentation.model.ScanMenuDrawerLayout(
+    ScanMenuDrawerLayout(
         isMenuDrawerOpen = state.isMenuDrawerOpen,
         close = { onInteraction(ScanInteraction.CloseMenuDrawer) },
         navigateHistory = { onInteraction(ScanInteraction.NavigateToHistory) },

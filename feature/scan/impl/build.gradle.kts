@@ -37,6 +37,7 @@ kotlin {
             implementation(projects.core.persistence)
             implementation(projects.core.navigation)
             implementation(projects.core.notification)
+            implementation(projects.core.capturable)
             implementation(projects.feature.settings.impl)
 
             implementation(libs.compose.runtime)
@@ -53,6 +54,8 @@ kotlin {
             implementation(libs.koin.compose)
             implementation(libs.koin.viewModel)
             implementation(libs.kotlinx.coroutines.core)
+
+            implementation(libs.qr.kit)
 
             implementation(projects.uiComponent)
         }

@@ -1,5 +1,6 @@
 package com.domelabs.scanapp.feature.scan.impl.domain.usecase
 
+import com.domelabs.scanapp.feature.scan.impl.domain.model.ScanHistoryItem
 import com.domelabs.scanapp.feature.scan.impl.domain.model.ScanHistorySource
 import com.domelabs.scanapp.feature.scan.impl.domain.repository.ScanHistoryRepository
 
@@ -11,7 +12,7 @@ class RegisterScanHistoryUseCase(
         codeKind: String,
         codeFormat: String,
         source: ScanHistorySource,
-    ): Boolean {
+    ): ScanHistoryItem? {
         return repository.registerScan(
             rawValue = rawValue,
             codeKind = codeKind,

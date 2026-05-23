@@ -80,11 +80,7 @@ class ScanHistoryScreenViewModel(
         viewModelScope.launch {
             NavigationDispatcher.navigate(
                 NavRoute.ScanDetails(
-                    rawValue = item.rawValue,
-                    codeKind = item.codeKind,
-                    codeFormat = item.codeFormat,
-                    source = item.source,
-                    scannedAtEpochMillis = item.scannedAtEpochMillis,
+                    id = item.id
                 )
             )
         }

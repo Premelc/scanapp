@@ -3,7 +3,6 @@ package com.domelabs.scanapp.feature.scan.impl.presentation.model.details
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -16,7 +15,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -36,34 +34,46 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.domelabs.scanapp.core.navigation.NavRoute
 import com.domelabs.scanapp.core.navigation.NavigationDispatcher
 import com.domelabs.scanapp.core.scan.GeneratedCodeMatrix
-import com.domelabs.scanapp.core.scan.rememberCodeShareActions
+import com.domelabs.scanapp.feature.scan.impl.domain.model.ScanHistoryItem
 import com.domelabs.scanapp.uiComponent.components.NeoBrutalButton
 import com.domelabs.scanapp.uiComponent.components.NeoBrutalButtonStyle
 import com.domelabs.scanapp.uiComponent.components.NeoBrutalCard
 import com.domelabs.scanapp.uiComponent.theme.ScanAppTheme
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.number
+import kotlinx.datetime.toLocalDateTime
 import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.koinInject
+import org.koin.compose.viewmodel.koinViewModel
+import org.koin.core.parameter.parametersOf
+import kotlin.time.Instant
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ScanDetailsScreen(
-    route: NavRoute.ScanDetails,
-    viewModel: ScanDetailsScreenViewModel = koinInject(),
-) {
-    val shareActions = rememberCodeShareActions()
-    val scope = rememberCoroutineScope()
-    val state by viewModel.viewState.collectAsStateWithLifecycle()
-    var showShareSheet by remember { mutableStateOf(false) }
-    var isPreparingShareImage by remember { mutableStateOf(false) }
-
-    LaunchedEffect(route.rawValue, route.codeFormat) {
-        viewModel.load(route)
+fun ScanDetailsScreen(id: Long) {
+    val viewModel: ScanDetailsViewModel = koinViewModel(key = id.toString()) {
+        parametersOf(id)
     }
+
+    val state by viewModel.viewState.collectAsStateWithLifecycle()
+
+    state.historyItem?.let {
+        ScanDetailsContent(state.showShareSheet, it, viewModel::onInteraction)
+    }
+}
+
+@Composable
+private fun ScanDetailsContent(
+    showShareSheet: Boolean,
+    historyItem: ScanHistoryItem,
+    onInteraction: (ScanDetailsInteraction) -> Unit,
+) {
+    val scope = rememberCoroutineScope()
 
     Column(
         modifier = Modifier
@@ -81,13 +91,13 @@ fun ScanDetailsScreen(
                 text = "Back",
                 style = NeoBrutalButtonStyle.Secondary,
                 onClick = {
-                    scope.launch { NavigationDispatcher.back() }
+                    onInteraction(ScanDetailsInteraction.Back)
                 },
             )
             NeoBrutalButton(
                 text = "Share",
                 style = NeoBrutalButtonStyle.Primary,
-                onClick = { showShareSheet = true },
+                onClick = { onInteraction(ScanDetailsInteraction.Share) },
                 leadingIcon = {
                     Icon(
                         painter = painterResource(ScanAppTheme.Icons.share),
@@ -99,33 +109,10 @@ fun ScanDetailsScreen(
         }
 
         NeoBrutalCard(modifier = Modifier.fillMaxWidth()) {
-            when (val matrixState = state.matrixState) {
-                CodePreviewState.Loading -> {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 28.dp),
-                        horizontalArrangement = Arrangement.Center,
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        CircularProgressIndicator()
-                    }
-                }
-
-                is CodePreviewState.Ready -> {
-                    CodeMatrixPreview(
-                        matrix = matrixState.matrix,
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                }
-
-                CodePreviewState.Unavailable -> {
-                    Text(
-                        text = "Preview unavailable for ${formatLabel(route.codeFormat)}.",
-                        style = MaterialTheme.typography.bodyMedium,
-                    )
-                }
-            }
+            QrCodePicture(
+                code = historyItem.rawValue,
+                modifier = Modifier.fillMaxWidth().padding(20.dp).aspectRatio(1f)
+            )
         }
 
         Text(
@@ -137,75 +124,32 @@ fun ScanDetailsScreen(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             InfoPill(
-                label = route.codeKind,
+                label = historyItem.codeKind,
                 container = MaterialTheme.colorScheme.primaryContainer,
                 content = MaterialTheme.colorScheme.onPrimaryContainer,
             )
             InfoPill(
-                label = formatLabel(route.codeFormat),
+                label = formatLabel(historyItem.codeFormat),
                 container = MaterialTheme.colorScheme.secondaryContainer,
                 content = MaterialTheme.colorScheme.onSecondaryContainer,
             )
             InfoPill(
-                label = route.source,
+                label = historyItem.source.name,
                 container = MaterialTheme.colorScheme.tertiaryContainer,
                 content = MaterialTheme.colorScheme.onTertiaryContainer,
             )
         }
 
-        DetailRow("Raw value", route.rawValue, singleLine = false)
-        DetailRow("Scanned at", state.scannedAtLabel)
+        DetailRow("Raw value", historyItem.rawValue, singleLine = false)
+        DetailRow("Scanned at", formatScannedAt(historyItem.timestampEpochMillis))
     }
 
     if (showShareSheet) {
-        ModalBottomSheet(
-            onDismissRequest = { showShareSheet = false },
-        ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                Text(
-                    text = "Share code",
-                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                )
-                ShareActionRow(
-                    title = "Share as image",
-                    description = "Share rendered ${route.codeKind.lowercase()} image",
-                    enabled = state.matrixState is CodePreviewState.Ready && !isPreparingShareImage,
-                    onClick = {
-                        scope.launch {
-                            isPreparingShareImage = true
-                            try {
-                                val pngBytes = viewModel.generateImageForShare(route)
-                                if (pngBytes != null) {
-                                    shareActions.shareImage(
-                                        pngBytes = pngBytes,
-                                        fileName = "scan-${route.codeFormat.lowercase()}.png",
-                                    )
-                                    showShareSheet = false
-                                }
-                            } catch (cancelled: CancellationException) {
-                                throw cancelled
-                            } finally {
-                                isPreparingShareImage = false
-                            }
-                        }
-                    },
-                )
-                ShareActionRow(
-                    title = "Share as text",
-                    description = "Share the raw code content",
-                    enabled = true,
-                    onClick = {
-                        shareActions.shareText(route.rawValue)
-                        showShareSheet = false
-                    },
-                )
-            }
-        }
+        ShareScanModal(
+            onDismiss = { },
+            kind = historyItem.codeKind,
+            rawValue = historyItem.rawValue,
+        )
     }
 }
 
@@ -245,67 +189,6 @@ private fun InfoPill(
     )
 }
 
-@Composable
-private fun CodeMatrixPreview(
-    matrix: GeneratedCodeMatrix,
-    modifier: Modifier = Modifier,
-) {
-    val ratio = matrix.width.toFloat() / matrix.height.toFloat()
-    Canvas(
-        modifier = modifier
-            .aspectRatio(ratio)
-            .clip(RoundedCornerShape(8.dp))
-            .background(Color.White)
-            .border(1.dp, Color.Black.copy(alpha = 0.25f), RoundedCornerShape(8.dp)),
-    ) {
-        val cellWidth = size.width / matrix.width.toFloat()
-        val cellHeight = size.height / matrix.height.toFloat()
-        for (y in 0 until matrix.height) {
-            for (x in 0 until matrix.width) {
-                if (matrix.bits[y * matrix.width + x]) {
-                    drawRect(
-                        color = Color.Black,
-                        topLeft = Offset(
-                            x * cellWidth,
-                            y * cellHeight,
-                        ),
-                        size = Size(cellWidth, cellHeight),
-                    )
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun ShareActionRow(
-    title: String,
-    description: String,
-    enabled: Boolean,
-    onClick: () -> Unit,
-) {
-    NeoBrutalCard(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(8.dp))
-            .clickable(enabled = enabled, onClick = onClick),
-        showShadow = false,
-    ) {
-        Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
-                color = if (enabled) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
-            )
-            Text(
-                text = description,
-                style = MaterialTheme.typography.bodySmall,
-                color = if (enabled) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
-            )
-        }
-    }
-}
-
 private fun formatLabel(codeFormat: String): String {
     return when (codeFormat) {
         "PDF_417" -> "PDF-417"
@@ -313,8 +196,13 @@ private fun formatLabel(codeFormat: String): String {
     }
 }
 
-sealed interface CodePreviewState {
-    data object Loading : CodePreviewState
-    data object Unavailable : CodePreviewState
-    data class Ready(val matrix: GeneratedCodeMatrix) : CodePreviewState
+private fun formatScannedAt(epochMillis: Long): String {
+    val dt = Instant
+        .fromEpochMilliseconds(epochMillis)
+        .toLocalDateTime(TimeZone.currentSystemDefault())
+
+    fun Int.twoDigits() = toString().padStart(2, '0')
+
+    return "${dt.year}-${dt.month.number.twoDigits()}-${dt.day.twoDigits()} " +
+            "${dt.hour.twoDigits()}:${dt.minute.twoDigits()}:${dt.second.twoDigits()}"
 }

@@ -13,7 +13,7 @@ fun ScanScreenEntryPoint() {
 
 @Composable
 fun ScanDetailsEntryPoint(route: NavRoute.ScanDetails) {
-    ScanDetailsScreen(route)
+    ScanDetailsScreen(route.id)
 }
 
 @Composable

@@ -6,13 +6,13 @@ import kotlinx.coroutines.flow.Flow
 
 interface ScanHistoryRepository {
     fun observeHistory(): Flow<List<ScanHistoryItem>>
-
+    fun historyItemFlow(id:Long): Flow<ScanHistoryItem>
     suspend fun registerScan(
         rawValue: String,
         codeKind: String,
         codeFormat: String,
         source: ScanHistorySource,
-    ): Boolean
+    ): ScanHistoryItem?
 
     suspend fun deleteHistoryItem(id: Long)
 

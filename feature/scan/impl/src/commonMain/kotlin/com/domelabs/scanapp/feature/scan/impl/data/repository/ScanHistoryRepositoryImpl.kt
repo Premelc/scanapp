@@ -6,7 +6,9 @@ import com.domelabs.scanapp.feature.scan.impl.domain.model.ScanHistoryItem
 import com.domelabs.scanapp.feature.scan.impl.domain.model.ScanHistorySource
 import com.domelabs.scanapp.feature.scan.impl.domain.repository.ScanHistoryRepository
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.map
+import kotlin.time.Clock
 
 class ScanHistoryRepositoryImpl(
     private val localSource: ScanHistoryLocalSource,
@@ -26,26 +28,45 @@ class ScanHistoryRepositoryImpl(
             }
         }
 
+    override fun historyItemFlow(id: Long): Flow<ScanHistoryItem> =
+        localSource.observeHistory().map { history ->
+            history.firstOrNull { it.id == id }?.let { entity ->
+                ScanHistoryItem(
+                    id = entity.id,
+                    timestampEpochMillis = entity.timestampEpochMillis,
+                    rawValue = entity.rawValue,
+                    codeKind = entity.codeKind,
+                    codeFormat = entity.codeFormat,
+                    source = entity.source.toScanHistorySource(),
+                )
+            }
+        }.filterNotNull()
+
     override suspend fun registerScan(
         rawValue: String,
         codeKind: String,
         codeFormat: String,
         source: ScanHistorySource,
-    ): Boolean {
-        val now = System.currentTimeMillis()
+    ): ScanHistoryItem? {
+        val now = Clock.System.now().toEpochMilliseconds()
         val latest = localSource.getLatestByRawValue(rawValue)
-        if (latest != null && (now - latest.timestampEpochMillis) < 10_000L) return false
-
-        localSource.insert(
-            ScanHistoryEntity(
-                timestampEpochMillis = now,
-                rawValue = rawValue,
-                codeKind = codeKind,
-                codeFormat = codeFormat,
-                source = source.name,
-            )
+        if (latest != null && (now - latest.timestampEpochMillis) < 10_000L) return null
+        val entity = ScanHistoryEntity(
+            timestampEpochMillis = now,
+            rawValue = rawValue,
+            codeKind = codeKind,
+            codeFormat = codeFormat,
+            source = source.name,
         )
-        return true
+        localSource.insert(entity)
+        return ScanHistoryItem(
+            id = entity.id,
+            timestampEpochMillis = entity.timestampEpochMillis,
+            rawValue = entity.rawValue,
+            codeKind = entity.codeKind,
+            codeFormat = entity.codeFormat,
+            source = ScanHistorySource.valueOf(entity.source)
+        )
     }
 
     override suspend fun deleteHistoryItem(id: Long) {
