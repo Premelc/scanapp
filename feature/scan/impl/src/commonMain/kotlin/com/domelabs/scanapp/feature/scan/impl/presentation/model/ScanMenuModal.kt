@@ -20,6 +20,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.LayoutDirection
@@ -27,6 +28,7 @@ import androidx.compose.ui.unit.dp
 import com.domelabs.scanapp.uiComponent.components.NeoBrutalButton
 import com.domelabs.scanapp.uiComponent.components.NeoBrutalButtonStyle
 import com.domelabs.scanapp.uiComponent.components.NeoBrutalCard
+import com.domelabs.scanapp.uiComponent.theme.NeoWhite
 import com.domelabs.scanapp.uiComponent.theme.ScanAppTheme
 import kotlinx.coroutines.flow.drop
 import org.jetbrains.compose.resources.DrawableResource
@@ -74,6 +76,7 @@ internal fun ScanMenuDrawerLayout(
             drawerContent = {
                 CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
                     ModalDrawerSheet(
+                        drawerContainerColor = Color.Transparent,
                         modifier = Modifier.fillMaxWidth(0.82f),
                     ) {
                         MenuDrawerSheetContent(
@@ -125,6 +128,7 @@ private fun MenuDrawerSheetContent(
         modifier = Modifier
             .fillMaxSize()
             .padding(12.dp),
+        backgroundColor = NeoWhite.copy(alpha = 0.9f)
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),

@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.util.Log
 import androidx.camera.core.Camera
 import androidx.camera.core.CameraSelector
+import androidx.camera.core.FocusMeteringAction
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
@@ -12,11 +13,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
@@ -44,6 +46,9 @@ import com.google.zxing.MultiFormatReader
 import com.google.zxing.common.HybridBinarizer
 import com.google.zxing.PlanarYUVLuminanceSource
 import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicLong
 
 private const val SCAN_LOG_TAG = "ScanCodeScanner"
 
@@ -55,6 +60,7 @@ actual fun CodeScanner(
     enabled: Boolean,
     flashEnabled: Boolean,
     cooldownMillis: Long,
+    analysisIntervalMillis: Long,
 ) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -65,8 +71,10 @@ actual fun CodeScanner(
         }
     }
     val cameraExecutor = remember { Executors.newSingleThreadExecutor() }
+    val lastAnalysisAtMs = remember { AtomicLong(0L) }
+    val lastDetectionAtMs = remember { AtomicLong(0L) }
+    val isAnalyzing = remember { AtomicBoolean(false) }
     var boundCamera by remember { mutableStateOf<Camera?>(null) }
-    var lastDetectedAt by remember { mutableLongStateOf(0L) }
 
     DisposableEffect(Unit) {
         onDispose {
@@ -109,13 +117,24 @@ actual fun CodeScanner(
                     .build()
 
                 analysis.setAnalyzer(cameraExecutor) { imageProxy ->
+                    val now = System.currentTimeMillis()
+                    if (now - lastAnalysisAtMs.get() < analysisIntervalMillis) {
+                        imageProxy.close()
+                        return@setAnalyzer
+                    }
+                    if (!isAnalyzing.compareAndSet(false, true)) {
+                        imageProxy.close()
+                        return@setAnalyzer
+                    }
+                    lastAnalysisAtMs.set(now)
+
                     processFrame(
                         imageProxy = imageProxy,
                         scanner = scanner,
                         dataBarReader = dataBarReader,
                         cooldownMillis = cooldownMillis,
-                        lastDetectedAt = lastDetectedAt,
-                        onDetectedTimestampUpdate = { lastDetectedAt = it },
+                        lastDetectionAtMs = lastDetectionAtMs,
+                        onAnalysisFinished = { isAnalyzing.set(false) },
                         onDetected = onDetected,
                         onError = onError,
                     )
@@ -148,9 +167,40 @@ actual fun CodeScanner(
     }
 
     AndroidView(
-        modifier = modifier,
+        modifier = modifier.pointerInput(boundCamera, enabled) {
+            if (!enabled) return@pointerInput
+            detectTapGestures { tapOffset ->
+                focusCameraAt(
+                    previewView = previewView,
+                    camera = boundCamera,
+                    x = tapOffset.x,
+                    y = tapOffset.y,
+                )
+            }
+        },
         factory = { previewView },
     )
+}
+
+private fun focusCameraAt(
+    previewView: PreviewView,
+    camera: Camera?,
+    x: Float,
+    y: Float,
+) {
+    val control = camera?.cameraControl ?: return
+    val point = previewView.meteringPointFactory.createPoint(x, y)
+    val action = FocusMeteringAction.Builder(
+        point,
+        FocusMeteringAction.FLAG_AF or FocusMeteringAction.FLAG_AE,
+    )
+        .setAutoCancelDuration(3, TimeUnit.SECONDS)
+        .build()
+
+    runCatching { control.startFocusAndMetering(action) }
+        .onFailure {
+            Log.w(SCAN_LOG_TAG, "Tap focus failed: ${it.message}")
+        }
 }
 
 @SuppressLint("UnsafeOptInUsageError")
@@ -159,21 +209,22 @@ private fun processFrame(
     scanner: com.google.mlkit.vision.barcode.BarcodeScanner,
     dataBarReader: MultiFormatReader,
     cooldownMillis: Long,
-    lastDetectedAt: Long,
-    onDetectedTimestampUpdate: (Long) -> Unit,
+    lastDetectionAtMs: AtomicLong,
+    onAnalysisFinished: () -> Unit,
     onDetected: (ScannedCode) -> Unit,
     onError: (ScanError) -> Unit,
 ) {
     val mediaImage = imageProxy.image
     if (mediaImage == null) {
         imageProxy.close()
+        onAnalysisFinished()
         return
     }
 
     val image = InputImage.fromMediaImage(mediaImage, imageProxy.imageInfo.rotationDegrees)
     scanner.process(image)
         .addOnSuccessListener { barcodes ->
-            val mlkitAccepted = if (barcodes.isNotEmpty()) {
+            val mlkitHandled = if (barcodes.isNotEmpty()) {
                 val barcode = barcodes.firstOrNull()
                 if (barcode == null) {
                     false
@@ -196,14 +247,15 @@ private fun processFrame(
                         false
                     } else {
                         val now = System.currentTimeMillis()
-                        if (now - lastDetectedAt < cooldownMillis) {
+                        val lastDetectionAt = lastDetectionAtMs.get()
+                        if (now - lastDetectionAt < cooldownMillis) {
                             Log.d(
                                 SCAN_LOG_TAG,
-                                "Cooldown drop for format=$format elapsed=${now - lastDetectedAt}ms cooldown=${cooldownMillis}ms",
+                                "Cooldown drop for format=$format elapsed=${now - lastDetectionAt}ms cooldown=${cooldownMillis}ms",
                             )
                             true
                         } else {
-                            onDetectedTimestampUpdate(now)
+                            lastDetectionAtMs.set(now)
                             Log.d(
                                 SCAN_LOG_TAG,
                                 "Accepted detection format=$format kind=$kind valueLength=${rawValue.length}",
@@ -223,20 +275,21 @@ private fun processFrame(
                 false
             }
 
-            if (mlkitAccepted) return@addOnSuccessListener
+            if (mlkitHandled) return@addOnSuccessListener
 
             val dataBarResult = imageProxy.tryDecodeGs1DataBar(dataBarReader)
             if (dataBarResult != null) {
                 val (format, rawValue) = dataBarResult
                 val now = System.currentTimeMillis()
-                if (now - lastDetectedAt < cooldownMillis) {
+                val lastDetectionAt = lastDetectionAtMs.get()
+                if (now - lastDetectionAt < cooldownMillis) {
                     Log.d(
                         SCAN_LOG_TAG,
-                        "Cooldown drop for ZXing GS1 format=$format elapsed=${now - lastDetectedAt}ms cooldown=${cooldownMillis}ms",
+                        "Cooldown drop for ZXing GS1 format=$format elapsed=${now - lastDetectionAt}ms cooldown=${cooldownMillis}ms",
                     )
                     return@addOnSuccessListener
                 }
-                onDetectedTimestampUpdate(now)
+                lastDetectionAtMs.set(now)
                 Log.d(
                     SCAN_LOG_TAG,
                     "Accepted ZXing GS1 detection format=$format valueLength=${rawValue.length}",
@@ -256,6 +309,7 @@ private fun processFrame(
         }
         .addOnCompleteListener {
             imageProxy.close()
+            onAnalysisFinished()
         }
 }
 

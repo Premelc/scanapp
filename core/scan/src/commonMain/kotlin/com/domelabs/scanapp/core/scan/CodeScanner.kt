@@ -11,4 +11,5 @@ expect fun CodeScanner(
     enabled: Boolean = true,
     flashEnabled: Boolean = false,
     cooldownMillis: Long = 2_000L,
+    analysisIntervalMillis: Long = 500L,
 )
