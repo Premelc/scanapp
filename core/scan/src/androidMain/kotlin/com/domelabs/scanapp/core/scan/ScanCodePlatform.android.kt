@@ -11,6 +11,7 @@ import com.google.zxing.EncodeHintType
 import com.google.zxing.MultiFormatWriter
 import com.google.zxing.common.BitMatrix
 import com.google.zxing.pdf417.encoder.Compaction
+import com.google.zxing.pdf417.encoder.Dimensions
 import qrgenerator.generateCode
 import java.io.ByteArrayOutputStream
 import java.io.File
@@ -89,7 +90,7 @@ private fun encodeBarcodeMatrix(
 ): BitMatrix? {
     val width = targetWidthPx.coerceIn(320, 1600)
     for (height in heightCandidatesFor(format, width)) {
-        for (hints in hintCandidatesFor(format)) {
+        for (hints in hintCandidatesFor(format, rawValue)) {
             val matrix = runCatching {
                 MultiFormatWriter().encode(rawValue, format, width, height, hints)
             }.getOrNull()
@@ -113,16 +114,67 @@ private fun heightCandidatesFor(format: BarcodeFormat, width: Int): List<Int> = 
     else -> listOf((width * 0.42f).toInt().coerceAtLeast(80))
 }
 
-private fun hintCandidatesFor(format: BarcodeFormat): List<Map<EncodeHintType, Any>> {
+private fun hintCandidatesFor(
+    format: BarcodeFormat,
+    rawValue: String,
+): List<Map<EncodeHintType, Any>> {
     val base = mapOf(EncodeHintType.MARGIN to 0)
     if (format != BarcodeFormat.PDF_417) return listOf(base)
 
-    return listOf(
-        base + mapOf(EncodeHintType.PDF417_COMPACTION to Compaction.AUTO),
-        base + mapOf(EncodeHintType.PDF417_COMPACTION to Compaction.TEXT),
-        base + mapOf(EncodeHintType.PDF417_COMPACTION to Compaction.BYTE),
-        base,
+    val hasNonAscii = rawValue.any { it.code > 0x7F }
+    val isLargePayload = rawValue.length > 150
+    val largeDimensions = mapOf(
+        EncodeHintType.PDF417_DIMENSIONS to Dimensions(2, 30, 3, 90),
+        EncodeHintType.ERROR_CORRECTION to 4,
     )
+
+    val hints = mutableListOf<Map<EncodeHintType, Any>>()
+
+    fun Map<EncodeHintType, Any>.withLargePayloadHints(): Map<EncodeHintType, Any> =
+        if (isLargePayload) this + largeDimensions else this
+
+    if (hasNonAscii) {
+        hints += (
+            base + mapOf(
+                EncodeHintType.PDF417_COMPACTION to Compaction.BYTE,
+                EncodeHintType.CHARACTER_SET to "ISO-8859-2",
+            )
+            ).withLargePayloadHints()
+        hints += (
+            base + mapOf(
+                EncodeHintType.PDF417_COMPACTION to Compaction.BYTE,
+                EncodeHintType.CHARACTER_SET to "ISO-8859-2",
+                EncodeHintType.PDF417_AUTO_ECI to true,
+            )
+            ).withLargePayloadHints()
+        hints += (
+            base + mapOf(
+                EncodeHintType.PDF417_COMPACTION to Compaction.BYTE,
+                EncodeHintType.CHARACTER_SET to "UTF-8",
+                EncodeHintType.PDF417_AUTO_ECI to true,
+            )
+            ).withLargePayloadHints()
+        hints += (
+            base + mapOf(
+                EncodeHintType.PDF417_COMPACTION to Compaction.AUTO,
+                EncodeHintType.CHARACTER_SET to "ISO-8859-2",
+                EncodeHintType.PDF417_AUTO_ECI to true,
+            )
+            ).withLargePayloadHints()
+    }
+
+    hints += (
+        base + mapOf(
+            EncodeHintType.PDF417_COMPACTION to Compaction.AUTO,
+            EncodeHintType.PDF417_AUTO_ECI to true,
+        )
+        ).withLargePayloadHints()
+    hints += (base + mapOf(EncodeHintType.PDF417_COMPACTION to Compaction.AUTO)).withLargePayloadHints()
+    hints += (base + mapOf(EncodeHintType.PDF417_COMPACTION to Compaction.TEXT)).withLargePayloadHints()
+    hints += (base + mapOf(EncodeHintType.PDF417_COMPACTION to Compaction.BYTE)).withLargePayloadHints()
+    hints += base.withLargePayloadHints()
+
+    return hints.distinct()
 }
 
 private fun generateQrKitBitmap(rawValue: String): Bitmap {

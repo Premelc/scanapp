@@ -48,6 +48,7 @@ import com.domelabs.scanapp.uiComponent.components.LocalScreenMetrics
 import com.domelabs.scanapp.uiComponent.components.NeoBrutalButton
 import com.domelabs.scanapp.uiComponent.components.NeoBrutalButtonStyle
 import com.domelabs.scanapp.uiComponent.components.NeoBrutalCard
+import com.domelabs.scanapp.uiComponent.components.shadow.ScrollableShadowColumn
 import com.domelabs.scanapp.uiComponent.theme.ScanAppTheme
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -113,13 +114,12 @@ private fun ScanDetailsContent(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .systemBarsPadding()
-            .padding(16.dp)
-            .verticalScroll(rememberScrollState()),
+            .systemBarsPadding(),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         Row(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth()
+                .padding(horizontal = 16.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
@@ -143,49 +143,52 @@ private fun ScanDetailsContent(
                 },
             )
         }
+        ScrollableShadowColumn(
+            modifier = Modifier.padding(horizontal = 12.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            NeoBrutalCard(modifier = Modifier.fillMaxWidth()) {
+                codeByteArray?.let {
+                    Image(
+                        modifier = Modifier.fillMaxWidth(),
+                        bitmap = it.decodeToImageBitmap(),
+                        contentDescription = formatLabel(historyItem.codeFormat.name),
+                        contentScale = ContentScale.FillWidth,
+                    )
+                }
+            }
 
-        NeoBrutalCard(modifier = Modifier.fillMaxWidth()) {
-            codeByteArray?.let {
-                Image(
-                    modifier = Modifier.fillMaxWidth(),
-                    bitmap = it.decodeToImageBitmap(),
-                    contentDescription = formatLabel(historyItem.codeFormat.name),
-                    contentScale = ContentScale.FillWidth,
+            Text(
+                text = "Scanned item details",
+                style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold),
+            )
+
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                InfoPill(
+                    label = historyItem.codeKind.name,
+                    container = MaterialTheme.colorScheme.primaryContainer,
+                    content = MaterialTheme.colorScheme.onPrimaryContainer,
+                )
+                InfoPill(
+                    label = formatLabel(historyItem.codeFormat.name),
+                    container = MaterialTheme.colorScheme.secondaryContainer,
+                    content = MaterialTheme.colorScheme.onSecondaryContainer,
+                )
+                InfoPill(
+                    label = historyItem.source.name,
+                    container = MaterialTheme.colorScheme.tertiaryContainer,
+                    content = MaterialTheme.colorScheme.onTertiaryContainer,
                 )
             }
+
+            RawValueDetailRow(
+                value = historyItem.rawValue,
+                onCopy = { copyToClipboard(historyItem.rawValue) },
+            )
+            DetailRow("Scanned at", formatScannedAt(historyItem.timestampEpochMillis))
         }
-
-        Text(
-            text = "Scanned item details",
-            style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold),
-        )
-
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            InfoPill(
-                label = historyItem.codeKind.name,
-                container = MaterialTheme.colorScheme.primaryContainer,
-                content = MaterialTheme.colorScheme.onPrimaryContainer,
-            )
-            InfoPill(
-                label = formatLabel(historyItem.codeFormat.name),
-                container = MaterialTheme.colorScheme.secondaryContainer,
-                content = MaterialTheme.colorScheme.onSecondaryContainer,
-            )
-            InfoPill(
-                label = historyItem.source.name,
-                container = MaterialTheme.colorScheme.tertiaryContainer,
-                content = MaterialTheme.colorScheme.onTertiaryContainer,
-            )
-        }
-
-        RawValueDetailRow(
-            value = historyItem.rawValue,
-            onCopy = { copyToClipboard(historyItem.rawValue) },
-        )
-        DetailRow("Scanned at", formatScannedAt(historyItem.timestampEpochMillis))
-
         if (showShareSheet) {
             ShareScanModal(
                 onDismiss = {
