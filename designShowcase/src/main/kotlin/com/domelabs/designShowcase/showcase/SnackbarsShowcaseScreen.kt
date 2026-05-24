@@ -26,6 +26,7 @@ import com.domelabs.scanapp.notification.AppSnackbarHost
 import com.domelabs.scanapp.uiComponent.components.NeoBrutalButton
 import com.domelabs.scanapp.uiComponent.components.NeoBrutalButtonStyle
 import com.domelabs.scanapp.uiComponent.components.NeoBrutalCard
+import com.domelabs.scanapp.uiComponent.components.ScreenTopBar
 import kotlinx.coroutines.launch
 
 @Composable
@@ -45,14 +46,9 @@ fun SnackbarsShowcaseScreen(onBack: () -> Unit) {
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
-            NeoBrutalButton(
-                text = "Back",
-                onClick = onBack,
-                style = NeoBrutalButtonStyle.Secondary,
-            )
-            Text(
-                text = "SNACKBARS",
-                style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold),
+            ScreenTopBar(
+                title = "Snackbars",
+                onBack = onBack,
             )
             Text(
                 text = "Tap a kind to show a snackbar. Swipe horizontally to dismiss.",

@@ -26,8 +26,7 @@ import androidx.compose.ui.unit.dp
 import com.domelabs.scanapp.core.navigation.NavigationDispatcher
 import com.domelabs.scanapp.core.utils.toClipEntry
 import com.domelabs.scanapp.uiComponent.components.LineTabs
-import com.domelabs.scanapp.uiComponent.components.NeoBrutalButton
-import com.domelabs.scanapp.uiComponent.components.NeoBrutalButtonStyle
+import com.domelabs.scanapp.uiComponent.components.ScreenTopBar
 import com.mikepenz.aboutlibraries.ui.compose.m3.LibrariesContainer
 import com.mikepenz.aboutlibraries.ui.compose.produceLibraries
 import kotlinx.coroutines.launch
@@ -45,11 +44,9 @@ fun LicensesScreen() {
             .navigationBarsPadding(),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        NeoBrutalButton(
-            modifier = Modifier.padding(horizontal = 16.dp),
-            text = "Back",
-            style = NeoBrutalButtonStyle.Secondary,
-            onClick = {
+        ScreenTopBar(
+            title = "Licenses",
+            onBack = {
                 scope.launch {
                     NavigationDispatcher.back()
                 }

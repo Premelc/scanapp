@@ -14,9 +14,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.domelabs.scanapp.uiComponent.components.NeoBrutalButton
-import com.domelabs.scanapp.uiComponent.components.NeoBrutalButtonStyle
 import com.domelabs.scanapp.uiComponent.components.NeoBrutalCard
+import com.domelabs.scanapp.uiComponent.components.ScreenTopBar
 
 @Composable
 fun ShowcaseDetailScreen(
@@ -33,14 +32,9 @@ fun ShowcaseDetailScreen(
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        NeoBrutalButton(
-            text = "Back",
-            onClick = onBack,
-            style = NeoBrutalButtonStyle.Secondary,
-        )
-        Text(
-            text = title.uppercase(),
-            style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold),
+        ScreenTopBar(
+            title = title,
+            onBack = onBack,
         )
         NeoBrutalCard {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {

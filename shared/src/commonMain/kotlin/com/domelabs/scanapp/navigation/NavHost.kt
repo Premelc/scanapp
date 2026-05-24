@@ -11,8 +11,9 @@ import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
 import com.domelabs.scanapp.core.navigation.NavRoute
+import com.domelabs.scanapp.feature.collections.api.CollectionDetailsEntryPoint
 import com.domelabs.scanapp.feature.collections.api.CollectionsScreenEntryPoint
-import com.domelabs.scanapp.feature.scan.api.ScanDetailsEntryPoint
+import com.domelabs.scanapp.feature.scan.api.ItemDetailsEntryPoint
 import com.domelabs.scanapp.feature.scan.api.ScanHistoryEntryPoint
 import com.domelabs.scanapp.feature.scan.api.ScanScreenEntryPoint
 import com.domelabs.scanapp.feature.settings.api.AboutScreenEntryPoint
@@ -68,7 +69,10 @@ internal fun EntryProviderScope<NavRoute>.coreNavigation() {
     entry<NavRoute.Licenses> {
         LicensesScreenEntryPoint()
     }
-    entry<NavRoute.ScanDetails> { route ->
-        ScanDetailsEntryPoint(route)
+    entry<NavRoute.ItemDetails> { route ->
+        ItemDetailsEntryPoint(route)
+    }
+    entry<NavRoute.CollectionDetails> { route ->
+        CollectionDetailsEntryPoint(route)
     }
 }

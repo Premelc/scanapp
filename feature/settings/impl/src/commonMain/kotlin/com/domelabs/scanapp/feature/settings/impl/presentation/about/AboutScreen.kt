@@ -32,9 +32,8 @@ import com.domelabs.scanapp.core.navigation.NavRoute
 import com.domelabs.scanapp.core.navigation.NavigationDispatcher
 import com.domelabs.scanapp.core.utils.timeNow
 import com.domelabs.scanapp.feature.settings.impl.platform.AppInfo
-import com.domelabs.scanapp.uiComponent.components.NeoBrutalButton
-import com.domelabs.scanapp.uiComponent.components.NeoBrutalButtonStyle
 import com.domelabs.scanapp.uiComponent.components.NeoBrutalCard
+import com.domelabs.scanapp.uiComponent.components.ScreenTopBar
 import com.domelabs.scanapp.uiComponent.components.brand.DomeLabsWordMark
 import com.domelabs.scanapp.uiComponent.components.brand.WordMarkSize
 import com.domelabs.scanapp.uiComponent.theme.BrightCyan
@@ -83,20 +82,19 @@ internal fun AboutContent(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .navigationBarsPadding()
-            .padding(horizontal = 16.dp),
+            .navigationBarsPadding(),
     ) {
-        NeoBrutalButton(
-            text = "Back",
-            style = NeoBrutalButtonStyle.Secondary,
-            onClick = onBack,
+        ScreenTopBar(
+            title = "About",
+            onBack = onBack,
         )
 
         Column(
             modifier = Modifier
                 .weight(1f)
                 .fillMaxWidth()
-                .verticalScroll(rememberScrollState()),
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 16.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Spacer(modifier = Modifier.height(8.dp))

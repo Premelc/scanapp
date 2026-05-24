@@ -32,7 +32,8 @@ kotlin {
 
     sourceSets {
         commonMain.dependencies {
-            implementation(projects.feature.collections.impl)
+            api(projects.feature.collections.impl)
+            implementation(projects.core.navigation)
 
             implementation(libs.compose.runtime)
             implementation(libs.koin.core)

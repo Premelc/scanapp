@@ -41,6 +41,7 @@ kotlin {
             implementation(projects.core.capturable)
             implementation(projects.core.utils)
             implementation(projects.feature.settings.impl)
+            implementation(projects.feature.collections.api)
 
             implementation(libs.compose.runtime)
             implementation(libs.compose.foundation)

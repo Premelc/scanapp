@@ -13,9 +13,9 @@ import com.domelabs.scanapp.core.permission.PermissionType
 import com.domelabs.scanapp.core.scan.CodeKind
 import com.domelabs.scanapp.core.scan.ScanError
 import com.domelabs.scanapp.core.scan.ScannedCode
-import com.domelabs.scanapp.feature.scan.impl.domain.model.ScanHistorySource
+import com.domelabs.scanapp.feature.collections.impl.domain.model.ScannedItemSource
+import com.domelabs.scanapp.feature.collections.impl.domain.usecase.RegisterScannedItemUseCase
 import com.domelabs.scanapp.feature.scan.impl.domain.usecase.PlayScanFeedbackIfEnabledUseCase
-import com.domelabs.scanapp.feature.scan.impl.domain.usecase.RegisterScanHistoryUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -24,7 +24,7 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 class ScanViewModel(
-    private val registerScanHistoryUseCase: RegisterScanHistoryUseCase,
+    private val registerScannedItemUseCase: RegisterScannedItemUseCase,
     private val playScanFeedbackIfEnabledUseCase: PlayScanFeedbackIfEnabledUseCase,
 ) : ViewModel() {
     private val permissionState = MutableStateFlow(ScanPermissionState.Unknown)
@@ -134,7 +134,7 @@ class ScanViewModel(
                 lastDetection.value = interaction.code
                 errorState.value = null
                 viewModelScope.launch {
-                    processDetectedCode(interaction.code, ScanHistorySource.GALLERY)
+                    processDetectedCode(interaction.code, ScannedItemSource.GALLERY)
                 }
             }
 
@@ -146,7 +146,7 @@ class ScanViewModel(
                 lastDetection.value = interaction.code
                 errorState.value = null
                 viewModelScope.launch {
-                    processDetectedCode(interaction.code, ScanHistorySource.CAMERA)
+                    processDetectedCode(interaction.code, ScannedItemSource.CAMERA)
                 }
             }
 
@@ -170,9 +170,9 @@ class ScanViewModel(
 
     private suspend fun processDetectedCode(
         code: ScannedCode,
-        source: ScanHistorySource,
+        source: ScannedItemSource,
     ) {
-        val accepted = registerScanHistoryUseCase(
+        val accepted = registerScannedItemUseCase(
             rawValue = code.rawValue,
             codeKind = code.kind.name,
             codeFormat = code.format.name,
@@ -196,9 +196,7 @@ class ScanViewModel(
                     durationMillis = 5_000L,
                     onAction = {
                         NavigationDispatcher.navigate(
-                            NavRoute.ScanDetails(
-                                id = accepted.id
-                            )
+                            NavRoute.ItemDetails(id = accepted.id)
                         )
                     },
                 )

@@ -23,7 +23,12 @@ sealed class NavRoute {
     data object Licenses : NavRoute()
 
     @Serializable
-    data class ScanDetails(
+    data class ItemDetails(
+        val id: Long,
+    ) : NavRoute()
+
+    @Serializable
+    data class CollectionDetails(
         val id: Long,
     ) : NavRoute()
 }

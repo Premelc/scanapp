@@ -4,42 +4,41 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.domelabs.scanapp.core.navigation.NavRoute
 import com.domelabs.scanapp.core.navigation.NavigationDispatcher
-import com.domelabs.scanapp.feature.scan.impl.domain.usecase.ClearScanHistoryUseCase
-import com.domelabs.scanapp.feature.scan.impl.domain.usecase.DeleteScanHistoryItemUseCase
-import com.domelabs.scanapp.feature.scan.impl.domain.usecase.ObserveScanHistoryUseCase
+import com.domelabs.scanapp.feature.collections.impl.domain.usecase.DeleteItemUseCase
+import com.domelabs.scanapp.feature.collections.impl.domain.usecase.ObserveCollectionsUseCase
+import com.domelabs.scanapp.feature.collections.impl.domain.usecase.ObserveRecentItemsUseCase
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlin.time.Clock
+import kotlin.time.ExperimentalTime
 
+@OptIn(ExperimentalTime::class)
 class ScanHistoryScreenViewModel(
-    observeScanHistoryUseCase: ObserveScanHistoryUseCase,
-    private val deleteScanHistoryItemUseCase: DeleteScanHistoryItemUseCase,
-    private val clearScanHistoryUseCase: ClearScanHistoryUseCase,
+    observeRecentItemsUseCase: ObserveRecentItemsUseCase,
+    observeCollectionsUseCase: ObserveCollectionsUseCase,
+    private val deleteItemUseCase: DeleteItemUseCase,
 ) : ViewModel() {
-    val viewState: StateFlow<ScanHistoryListViewState> = observeScanHistoryUseCase()
-        .map { history ->
-            ScanHistoryListViewState(
-                historyItems = history.map { it.toUi(Clock.System.now().toEpochMilliseconds()) },
-            )
-        }
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5_000L),
-            initialValue = ScanHistoryListViewState(),
+    val viewState: StateFlow<ScanHistoryListViewState> = combine(
+        observeRecentItemsUseCase(),
+        observeCollectionsUseCase(),
+    ) { items, collections ->
+        val now = Clock.System.now().toEpochMilliseconds()
+        val byId = collections.associateBy { it.collection.id }
+        ScanHistoryListViewState(
+            historyItems = items.map { it.toUi(now, byId) },
         )
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5_000L),
+        initialValue = ScanHistoryListViewState(),
+    )
 
     fun onDelete(id: Long) {
         viewModelScope.launch {
-            deleteScanHistoryItemUseCase(id)
-        }
-    }
-
-    fun onClear() {
-        viewModelScope.launch {
-            clearScanHistoryUseCase()
+            deleteItemUseCase(id)
         }
     }
 
@@ -52,9 +51,7 @@ class ScanHistoryScreenViewModel(
     fun openDetails(item: ScanHistoryItemUi) {
         viewModelScope.launch {
             NavigationDispatcher.navigate(
-                NavRoute.ScanDetails(
-                    id = item.id
-                )
+                NavRoute.ItemDetails(id = item.id)
             )
         }
     }

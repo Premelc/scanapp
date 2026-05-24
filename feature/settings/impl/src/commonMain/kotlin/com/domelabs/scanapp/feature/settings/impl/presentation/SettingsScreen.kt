@@ -15,9 +15,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.domelabs.scanapp.uiComponent.components.NeoBrutalButton
-import com.domelabs.scanapp.uiComponent.components.NeoBrutalButtonStyle
 import com.domelabs.scanapp.uiComponent.components.NeoBrutalCard
+import com.domelabs.scanapp.uiComponent.components.ScreenTopBar
 import org.koin.compose.koinInject
 
 @Composable
@@ -29,20 +28,18 @@ fun SettingsScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .navigationBarsPadding()
-            .padding(16.dp),
+            .navigationBarsPadding(),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        NeoBrutalButton(
-            text = "Back",
-            style = NeoBrutalButtonStyle.Secondary,
-            onClick = { viewModel.onInteraction(SettingsInteraction.NavigateBack) },
+        ScreenTopBar(
+            title = "Settings",
+            onBack = { viewModel.onInteraction(SettingsInteraction.NavigateBack) },
         )
 
-        Text(
-            text = "Settings",
-            style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold),
-        )
+        Column(
+            modifier = Modifier.padding(horizontal = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
         Text(
             text = "Scan feedback",
             style = MaterialTheme.typography.bodyMedium,
@@ -73,6 +70,7 @@ fun SettingsScreen(
                     style = MaterialTheme.typography.bodyLarge,
                 )
             }
+        }
         }
     }
 }

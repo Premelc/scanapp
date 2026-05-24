@@ -33,13 +33,22 @@ kotlin {
     sourceSets {
         commonMain.dependencies {
             implementation(projects.core.navigation)
+            implementation(projects.core.persistence)
+            implementation(projects.core.scan)
+            implementation(projects.core.notification)
             implementation(projects.uiComponent)
 
             implementation(libs.compose.runtime)
             implementation(libs.compose.foundation)
             implementation(libs.compose.material3)
             implementation(libs.compose.ui)
+            implementation(libs.compose.components.resources)
+            implementation(libs.androidx.lifecycle.runtimeCompose)
+            implementation(libs.androidx.lifecycle.viewmodelCompose)
             implementation(libs.koin.core)
+            implementation(libs.koin.compose)
+            implementation(libs.koin.viewModel)
+            implementation(libs.kotlinx.coroutines.core)
         }
     }
 }
