@@ -8,6 +8,7 @@ plugins {
 
 dependencies {
     implementation(projects.shared)
+    implementation(projects.core.ads)
     implementation(libs.androidx.activity.compose)
     implementation(libs.compose.uiToolingPreview)
     implementation(libs.compose.foundation)

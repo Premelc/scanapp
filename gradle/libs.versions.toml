@@ -54,6 +54,8 @@ exifinterface = "1.4.2"
 
 aboutLibraries = "14.2.0"
 
+googlePlayServicesAds = "24.8.0"
+
 # Library aliases grouped by domain
 [libraries]
 # Compose
@@ -122,6 +124,8 @@ androidx-exifinterface = { group = "androidx.exifinterface", name = "exifinterfa
 aboutlibraries-compose-m3 = { module = "com.mikepenz:aboutlibraries-compose-m3", version.ref = "aboutLibraries" }
 aboutlibraries-core = { module = "com.mikepenz:aboutlibraries-core", version.ref = "aboutLibraries" }
 
+google-play-services-ads = { module = "com.google.android.gms:play-services-ads", version.ref = "googlePlayServicesAds" }
+
 # Plugin aliases
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "agp" }
@@ -133,3 +137,4 @@ kotlinxSerialization = { id = "org.jetbrains.kotlin.plugin.serialization", versi
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 room = { id = "androidx.room", version.ref = "room" }
 aboutLibraries = { id = "com.mikepenz.aboutlibraries.plugin", version.ref = "aboutLibraries" }
+kotlinNativeCocoapods = { id = "org.jetbrains.kotlin.native.cocoapods", version.ref = "kotlin" }

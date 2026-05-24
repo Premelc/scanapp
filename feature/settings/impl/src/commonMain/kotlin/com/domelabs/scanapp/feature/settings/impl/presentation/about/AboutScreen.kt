@@ -11,7 +11,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.systemBarsPadding
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -83,7 +83,7 @@ internal fun AboutContent(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .systemBarsPadding()
+            .navigationBarsPadding()
             .padding(horizontal = 16.dp),
     ) {
         NeoBrutalButton(
@@ -99,14 +99,7 @@ internal fun AboutContent(
                 .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            Spacer(modifier = Modifier.height(6.dp))
-            Text(
-                text = "About",
-                style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 16.dp),
-            )
+            Spacer(modifier = Modifier.height(8.dp))
 
             AppInfoSection(versionName = versionName)
 
@@ -150,12 +143,11 @@ private fun AppInfoSection(versionName: String) {
     ) {
         NeoBrutalCard(
             modifier = Modifier,
-            backgroundColor = PastelBlue,
             showShadow = true,
         ) {
             Image(
                 painter = painterResource(ScanAppTheme.Icons.app),
-                contentDescription = "Scan App icon",
+                contentDescription = "QRScanr icon",
                 modifier = Modifier.size(160.dp),
             )
         }
@@ -163,7 +155,7 @@ private fun AppInfoSection(versionName: String) {
         Spacer(modifier = Modifier.height(16.dp))
 
         Text(
-            text = "Scan App",
+            text = "QRScanr",
             style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold),
         )
 

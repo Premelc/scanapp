@@ -48,6 +48,7 @@ kotlin {
             implementation(projects.core.notification)
             implementation(projects.core.permission)
             implementation(projects.core.persistence)
+            implementation(projects.core.ads)
             implementation(projects.feature.scan.api)
             implementation(projects.feature.collections.api)
             implementation(projects.feature.settings.api)

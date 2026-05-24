@@ -48,6 +48,7 @@ include(":core:utils")
 include(":core:file")
 include(":core:scan")
 include(":core:capturable")
+include(":core:ads")
 
 include(":feature:scan:api")
 include(":feature:scan:impl")

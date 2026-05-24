@@ -1,6 +1,6 @@
 package com.domelabs.designShowcase
 
-import androidx.compose.foundation.layout.systemBarsPadding
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -46,7 +46,7 @@ import com.domelabs.scanapp.uiComponent.theme.ProvideScanAppTheme
 fun App() {
     ProvideScanAppTheme {
         Surface(
-            modifier = Modifier.systemBarsPadding()
+            modifier = Modifier.navigationBarsPadding()
         ) {
             val navController: NavHostController = rememberNavController()
             NavHost(navController = navController, startDestination = ShowcaseHub) {
