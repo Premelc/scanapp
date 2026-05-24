@@ -175,9 +175,9 @@ class ScanViewModel(
             AppSnackbarDispatcher.dispatch(
                 AppSnackbarEvent(
                     title = if (accepted.codeKind == CodeKind.QR) {
-                        "QR code successfully scanned"
+                        "QR code scanned!"
                     } else {
-                        "Barcode successfully scanned"
+                        "Barcode scanned!"
                     },
                     subtitle = code.rawValue,
                     actionLabel = "Details",

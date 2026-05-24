@@ -1,10 +1,8 @@
 package com.domelabs.scanapp.feature.scan.impl.presentation.model.scan
 
-import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.keyframes
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
@@ -24,7 +22,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import org.jetbrains.compose.resources.painterResource
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -56,7 +53,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.domelabs.scanapp.uiComponent.theme.BrightCyan
-import com.domelabs.scanapp.uiComponent.theme.GlowingCyan
 import com.domelabs.scanapp.core.media.MediaItem
 import com.domelabs.scanapp.core.media.compress
 import com.domelabs.scanapp.core.media.rememberMediaPicker
