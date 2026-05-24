@@ -12,4 +12,5 @@ expect fun CodeScanner(
     flashEnabled: Boolean = false,
     cooldownMillis: Long = 2_000L,
     analysisIntervalMillis: Long = 500L,
+    zoomState: CameraZoomState? = null,
 )

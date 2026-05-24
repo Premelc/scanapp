@@ -116,8 +116,8 @@ private fun AppSnackbarCard(snackbarData: SnackbarData) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 12.dp, vertical = 6.dp)
-            .clip(RoundedCornerShape(12.dp))
+            .padding(horizontal = 16.dp, vertical = 10.dp)
+            .clip(RoundedCornerShape(14.dp))
             .background(MaterialTheme.colorScheme.surfaceContainerHigh)
             .graphicsLayer { translationX = dragOffsetX }
             .draggable(
@@ -133,7 +133,7 @@ private fun AppSnackbarCard(snackbarData: SnackbarData) {
                     }
                 },
             )
-            .padding(horizontal = 10.dp, vertical = 8.dp),
+            .padding(horizontal = 14.dp, vertical = 12.dp),
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -143,20 +143,20 @@ private fun AppSnackbarCard(snackbarData: SnackbarData) {
             Row(
                 modifier = Modifier.weight(1f),
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
             ) {
                 Badge(badge = badge, toneColor = toneColor)
                 Column {
                     Text(
                         text = event.title,
-                        style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
+                        style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
                         color = toneColor,
                     )
                     event.subtitle?.let { subtitle ->
                         Text(
                             text = subtitle,
-                            style = MaterialTheme.typography.bodySmall,
-                            maxLines = 1,
+                            style = MaterialTheme.typography.bodyMedium,
+                            maxLines = 2,
                             overflow = TextOverflow.Ellipsis,
                         )
                     }
@@ -166,15 +166,15 @@ private fun AppSnackbarCard(snackbarData: SnackbarData) {
             event.actionLabel?.let { label ->
                 Box(
                     modifier = Modifier
-                        .clip(RoundedCornerShape(8.dp))
+                        .clip(RoundedCornerShape(10.dp))
                         .background(MaterialTheme.colorScheme.secondaryContainer)
                         .clickable { snackbarData.performAction() }
-                        .padding(horizontal = 8.dp, vertical = 4.dp),
+                        .padding(horizontal = 12.dp, vertical = 8.dp),
                     contentAlignment = Alignment.Center,
                 ) {
                     Text(
                         text = label,
-                        style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
+                        style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
                     )
                 }
             }
@@ -189,14 +189,14 @@ private fun Badge(
 ) {
     Box(
         modifier = Modifier
-            .size(28.dp)
-            .clip(RoundedCornerShape(6.dp))
+            .size(34.dp)
+            .clip(RoundedCornerShape(8.dp))
             .background(toneColor.copy(alpha = 0.2f)),
         contentAlignment = Alignment.Center,
     ) {
         Text(
             text = badge,
-            style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
+            style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
             color = toneColor,
         )
     }

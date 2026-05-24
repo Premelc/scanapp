@@ -8,7 +8,7 @@ interface ScanHistoryLocalSource {
 
     suspend fun getLatestByRawValue(rawValue: String): ScanHistoryEntity?
 
-    suspend fun insert(item: ScanHistoryEntity)
+    suspend fun insert(item: ScanHistoryEntity): Long
 
     suspend fun deleteById(id: Long)
 

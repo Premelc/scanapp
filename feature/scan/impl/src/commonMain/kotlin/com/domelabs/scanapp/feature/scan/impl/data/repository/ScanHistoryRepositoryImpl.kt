@@ -60,9 +60,9 @@ class ScanHistoryRepositoryImpl(
             codeFormat = codeFormat,
             source = source.name,
         )
-        localSource.insert(entity)
+        val id = localSource.insert(entity)
         return ScanHistoryItem(
-            id = entity.id,
+            id = id,
             timestampEpochMillis = entity.timestampEpochMillis,
             rawValue = entity.rawValue,
             codeKind = CodeKind.valueOf(entity.codeKind),

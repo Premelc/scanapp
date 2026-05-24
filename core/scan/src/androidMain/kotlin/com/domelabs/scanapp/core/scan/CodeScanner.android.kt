@@ -7,6 +7,7 @@ import androidx.camera.core.CameraSelector
 import androidx.camera.core.FocusMeteringAction
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.Preview
+import androidx.camera.core.ZoomState
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
 import androidx.compose.runtime.Composable
@@ -22,6 +23,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.Observer
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.google.mlkit.vision.barcode.BarcodeScanning
 import com.google.mlkit.vision.barcode.common.Barcode.FORMAT_AZTEC
@@ -61,6 +63,7 @@ actual fun CodeScanner(
     flashEnabled: Boolean,
     cooldownMillis: Long,
     analysisIntervalMillis: Long,
+    zoomState: CameraZoomState?,
 ) {
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -164,6 +167,33 @@ actual fun CodeScanner(
     LaunchedEffect(boundCamera, flashEnabled, enabled) {
         if (!enabled) return@LaunchedEffect
         runCatching { boundCamera?.cameraControl?.enableTorch(flashEnabled) }
+    }
+
+    DisposableEffect(boundCamera, zoomState, lifecycleOwner) {
+        val camera = boundCamera
+        val state = zoomState
+        if (camera == null || state == null) {
+            onDispose { }
+            return@DisposableEffect
+        }
+
+        state.applyZoomRatio = { ratio ->
+            runCatching { camera.cameraControl.setZoomRatio(ratio) }
+        }
+
+        val observer = Observer<ZoomState> { zoom ->
+            state.updateFromCamera(
+                min = zoom.minZoomRatio,
+                max = zoom.maxZoomRatio,
+                ratio = zoom.zoomRatio,
+            )
+        }
+        camera.cameraInfo.zoomState.observe(lifecycleOwner, observer)
+
+        onDispose {
+            camera.cameraInfo.zoomState.removeObserver(observer)
+            state.reset()
+        }
     }
 
     AndroidView(

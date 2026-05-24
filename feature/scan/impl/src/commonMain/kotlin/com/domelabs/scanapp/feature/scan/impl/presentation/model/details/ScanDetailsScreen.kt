@@ -62,8 +62,25 @@ fun ScanDetailsScreen(id: Long) {
 
     val state by viewModel.viewState.collectAsStateWithLifecycle()
 
-    state.historyItem?.let {
-        ScanDetailsContent(state.showShareSheet, it, viewModel::onInteraction)
+    when (val historyItem = state.historyItem) {
+        null -> ScanDetailsLoading()
+        else -> ScanDetailsContent(state.showShareSheet, historyItem, viewModel::onInteraction)
+    }
+}
+
+@Composable
+private fun ScanDetailsLoading() {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .systemBarsPadding()
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        Text(
+            text = "Loading scan details...",
+            style = MaterialTheme.typography.bodyLarge,
+        )
     }
 }
 

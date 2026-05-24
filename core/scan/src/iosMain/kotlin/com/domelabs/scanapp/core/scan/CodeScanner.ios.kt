@@ -15,6 +15,7 @@ actual fun CodeScanner(
     flashEnabled: Boolean,
     cooldownMillis: Long,
     analysisIntervalMillis: Long,
+    zoomState: CameraZoomState?,
 ) {
     // iOS runtime behavior is implemented in v1 as camera-preview placeholder
     // so Android development can proceed while keeping iOS compilation healthy.

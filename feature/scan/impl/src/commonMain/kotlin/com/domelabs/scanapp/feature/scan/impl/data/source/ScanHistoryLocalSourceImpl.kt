@@ -12,9 +12,10 @@ class ScanHistoryLocalSourceImpl(
     override suspend fun getLatestByRawValue(rawValue: String): ScanHistoryEntity? =
         dao.getLatestByRawValue(rawValue)
 
-    override suspend fun insert(item: ScanHistoryEntity) {
-        dao.insert(item)
+    override suspend fun insert(item: ScanHistoryEntity): Long {
+        val id = dao.insert(item)
         dao.trimToLimit(50)
+        return id
     }
 
     override suspend fun deleteById(id: Long) {
