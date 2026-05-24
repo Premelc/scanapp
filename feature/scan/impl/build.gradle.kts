@@ -39,6 +39,7 @@ kotlin {
             implementation(projects.core.navigation)
             implementation(projects.core.notification)
             implementation(projects.core.capturable)
+            implementation(projects.core.utils)
             implementation(projects.feature.settings.impl)
 
             implementation(libs.compose.runtime)

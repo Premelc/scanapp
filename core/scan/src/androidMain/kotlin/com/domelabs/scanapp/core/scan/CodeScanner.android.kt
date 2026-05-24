@@ -260,7 +260,7 @@ private fun processFrame(
                 } else {
                     val format = barcode.format.toCodeFormat()
                     val kind = barcode.format.toCodeKind()
-                    val rawValue = barcode.rawValue
+                    val rawValue = barcode.resolveRawValue()
                     val rawBytesLength = barcode.rawBytes?.size ?: 0
 
                     Log.d(

@@ -11,7 +11,7 @@ actual fun rememberClipboardManager(): (String) -> Unit {
     val context = LocalContext.current
     return { text ->
         val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-        val clip = ClipData.newPlainText("SwiSSH", text)
+        val clip = ClipData.newPlainText("Scan value", text)
         clipboard.setPrimaryClip(clip)
     }
 }

@@ -1,4 +1,4 @@
-package com.domelabs.scanapp.utils
+package com.domelabs.scanapp.core.utils
 
 import androidx.compose.runtime.Composable
 import platform.UIKit.UIPasteboard

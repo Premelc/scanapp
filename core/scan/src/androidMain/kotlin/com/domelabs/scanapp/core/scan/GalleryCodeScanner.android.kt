@@ -47,9 +47,7 @@ private class AndroidGalleryCodeScanner(
         val barcodes = scanner.process(image).awaitResult() ?: return decodeGs1DataBarFromBitmapUri(context, uri)
         val barcode = barcodes.firstOrNull() ?: return decodeGs1DataBarFromBitmapUri(context, uri)
 
-        val rawValue = barcode.rawValue
-            ?.takeIf { it.isNotBlank() }
-            ?: barcode.rawBytes?.decodeToString()
+        val rawValue = barcode.resolveRawValue()
             ?: return decodeGs1DataBarFromBitmapUri(context, uri)
 
         return ScannedCode(

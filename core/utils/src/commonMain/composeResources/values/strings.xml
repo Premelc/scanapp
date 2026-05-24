@@ -1,7 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<resources>
-    <string name="timestamp_just_now">A few seconds ago</string>
-    <string name="timestamp_exact">%1$s:%2$s</string>
-    <string name="timestamp_yesterday">yesterday %1$s:%2$s</string>
-    <string name="timestamp_older">%1$s.%2$s.%3$s</string>
-</resources>

@@ -3,12 +3,14 @@ package com.domelabs.scanapp.feature.scan.impl.presentation.model.details
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -27,7 +29,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -35,6 +42,7 @@ import com.domelabs.scanapp.core.scan.CodeFormat
 import com.domelabs.scanapp.core.scan.CodeKind
 import com.domelabs.scanapp.core.scan.ScanCodePlatform
 import com.domelabs.scanapp.core.scan.rememberCodeShareActions
+import com.domelabs.scanapp.core.utils.rememberClipboardManager
 import com.domelabs.scanapp.feature.scan.impl.domain.model.ScanHistoryItem
 import com.domelabs.scanapp.uiComponent.components.LocalScreenMetrics
 import com.domelabs.scanapp.uiComponent.components.NeoBrutalButton
@@ -93,6 +101,7 @@ private fun ScanDetailsContent(
     val screenMetrics = LocalScreenMetrics.current
     val scope = rememberCoroutineScope()
     val shareActions = rememberCodeShareActions()
+    val copyToClipboard = rememberClipboardManager()
     var isPreparingShareImage by remember { mutableStateOf(false) }
     val codeByteArray = remember(historyItem.rawValue, historyItem.codeFormat) {
         generateDisplayPng(
@@ -138,9 +147,10 @@ private fun ScanDetailsContent(
         NeoBrutalCard(modifier = Modifier.fillMaxWidth()) {
             codeByteArray?.let {
                 Image(
-                    modifier = Modifier,
+                    modifier = Modifier.fillMaxWidth(),
                     bitmap = it.decodeToImageBitmap(),
-                    contentDescription = null
+                    contentDescription = formatLabel(historyItem.codeFormat.name),
+                    contentScale = ContentScale.FillWidth,
                 )
             }
         }
@@ -170,7 +180,10 @@ private fun ScanDetailsContent(
             )
         }
 
-        DetailRow("Raw value", historyItem.rawValue, singleLine = false)
+        RawValueDetailRow(
+            value = historyItem.rawValue,
+            onCopy = { copyToClipboard(historyItem.rawValue) },
+        )
         DetailRow("Scanned at", formatScannedAt(historyItem.timestampEpochMillis))
 
         if (showShareSheet) {
@@ -208,6 +221,91 @@ private fun ScanDetailsContent(
             )
         }
     }
+}
+
+@Composable
+private fun RawValueDetailRow(
+    value: String,
+    onCopy: () -> Unit,
+) {
+    var expanded by remember(value) { mutableStateOf(false) }
+    var hasOverflow by remember(value) { mutableStateOf(false) }
+
+    NeoBrutalCard(modifier = Modifier.fillMaxWidth()) {
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    text = "Raw value",
+                    style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold),
+                )
+                RawValueCopyAction(onClick = onCopy)
+            }
+            Text(
+                text = value,
+                style = MaterialTheme.typography.bodyLarge,
+                maxLines = if (expanded) Int.MAX_VALUE else 4,
+                overflow = TextOverflow.Ellipsis,
+                onTextLayout = { textLayoutResult ->
+                    if (!expanded) {
+                        hasOverflow = textLayoutResult.hasVisualOverflow
+                    }
+                },
+            )
+            if (hasOverflow || expanded) {
+                RawValueExpandAction(
+                    expanded = expanded,
+                    onClick = { expanded = !expanded },
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun RawValueCopyAction(
+    onClick: () -> Unit,
+) {
+    Row(
+        modifier = Modifier
+            .clickable(onClick = onClick)
+            .semantics { role = Role.Button },
+        horizontalArrangement = Arrangement.spacedBy(4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Icon(
+            painter = painterResource(ScanAppTheme.Icons.copy),
+            contentDescription = null,
+            modifier = Modifier.size(16.dp),
+            tint = Color.Unspecified,
+        )
+        Text(
+            text = "Copy",
+            style = MaterialTheme.typography.labelLarge.copy(
+                textDecoration = TextDecoration.Underline,
+            ),
+        )
+    }
+}
+
+@Composable
+private fun RawValueExpandAction(
+    expanded: Boolean,
+    onClick: () -> Unit,
+) {
+    Text(
+        text = if (expanded) "Show less" else "Show more",
+        modifier = Modifier
+            .clickable(onClick = onClick)
+            .semantics { role = Role.Button },
+        style = MaterialTheme.typography.labelLarge.copy(
+            textDecoration = TextDecoration.Underline,
+            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.65f),
+        ),
+    )
 }
 
 @Composable

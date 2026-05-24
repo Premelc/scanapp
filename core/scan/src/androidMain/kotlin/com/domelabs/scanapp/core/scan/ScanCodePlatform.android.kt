@@ -7,8 +7,10 @@ import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.FileProvider
 import com.google.zxing.BarcodeFormat
+import com.google.zxing.EncodeHintType
 import com.google.zxing.MultiFormatWriter
 import com.google.zxing.common.BitMatrix
+import com.google.zxing.pdf417.encoder.Compaction
 import qrgenerator.generateCode
 import java.io.ByteArrayOutputStream
 import java.io.File
@@ -55,16 +57,11 @@ actual object ScanCodePlatform {
             }.getOrNull()
         }
         val format = codeFormat.toBarcodeFormat() ?: return null
-        val dimensions = dimensionsFor(format)
-        return runCatching {
-            val matrix = MultiFormatWriter().encode(
-                rawValue,
-                format,
-                dimensions.first,
-                dimensions.second,
-            )
-            matrix.toCodeMatrix()
-        }.getOrNull()
+        return encodeBarcodeMatrix(
+            rawValue = rawValue,
+            format = format,
+            targetWidthPx = 840,
+        )?.toCodeMatrix()
     }
 
     actual fun generatePng(rawValue: String, codeFormat: String, sizePx: Int): ByteArray? {
@@ -74,17 +71,58 @@ actual object ScanCodePlatform {
             }.getOrNull()
         }
         val format = codeFormat.toBarcodeFormat() ?: return null
-        val dimensions = dimensionsFor(format, sizePx)
-        return runCatching {
-            val matrix = MultiFormatWriter().encode(
-                rawValue,
-                format,
-                dimensions.first,
-                dimensions.second,
-            )
-            matrix.toPngBytes()
-        }.getOrNull()
+        val matrix = encodeBarcodeMatrix(
+            rawValue = rawValue,
+            format = format,
+            targetWidthPx = sizePx,
+        ) ?: return null
+        return matrix.toScaledPngBytes(
+            targetWidthPx = sizePx.coerceIn(320, 1600),
+        )
     }
+}
+
+private fun encodeBarcodeMatrix(
+    rawValue: String,
+    format: BarcodeFormat,
+    targetWidthPx: Int,
+): BitMatrix? {
+    val width = targetWidthPx.coerceIn(320, 1600)
+    for (height in heightCandidatesFor(format, width)) {
+        for (hints in hintCandidatesFor(format)) {
+            val matrix = runCatching {
+                MultiFormatWriter().encode(rawValue, format, width, height, hints)
+            }.getOrNull()
+            if (matrix != null) return matrix
+        }
+    }
+    return null
+}
+
+private fun heightCandidatesFor(format: BarcodeFormat, width: Int): List<Int> = when (format) {
+    BarcodeFormat.PDF_417 -> listOf(0.22f, 0.30f, 0.40f, 0.50f)
+        .map { (width * it).toInt() }
+        .map { it.coerceIn(96, 800) }
+        .distinct()
+
+    BarcodeFormat.QR_CODE,
+    BarcodeFormat.AZTEC,
+    BarcodeFormat.DATA_MATRIX,
+    -> listOf(width)
+
+    else -> listOf((width * 0.42f).toInt().coerceAtLeast(80))
+}
+
+private fun hintCandidatesFor(format: BarcodeFormat): List<Map<EncodeHintType, Any>> {
+    val base = mapOf(EncodeHintType.MARGIN to 0)
+    if (format != BarcodeFormat.PDF_417) return listOf(base)
+
+    return listOf(
+        base + mapOf(EncodeHintType.PDF417_COMPACTION to Compaction.AUTO),
+        base + mapOf(EncodeHintType.PDF417_COMPACTION to Compaction.TEXT),
+        base + mapOf(EncodeHintType.PDF417_COMPACTION to Compaction.BYTE),
+        base,
+    )
 }
 
 private fun generateQrKitBitmap(rawValue: String): Bitmap {
@@ -112,15 +150,6 @@ private fun String.toBarcodeFormat(): BarcodeFormat? = when (this) {
     else -> null
 }
 
-private fun dimensionsFor(format: BarcodeFormat, baseSize: Int = 840): Pair<Int, Int> = when (format) {
-    BarcodeFormat.QR_CODE,
-    BarcodeFormat.AZTEC,
-    BarcodeFormat.DATA_MATRIX,
-    -> baseSize to baseSize
-
-    else -> baseSize to (baseSize * 0.42f).toInt()
-}
-
 private fun BitMatrix.toCodeMatrix(): GeneratedCodeMatrix {
     val payload = BooleanArray(width * height)
     for (y in 0 until height) {
@@ -142,6 +171,24 @@ private fun BitMatrix.toPngBytes(): ByteArray {
     bitmap.setPixels(pixels, 0, width, 0, 0, width, height)
     val stream = ByteArrayOutputStream()
     bitmap.compress(Bitmap.CompressFormat.PNG, 100, stream)
+    return stream.toByteArray()
+}
+
+private fun BitMatrix.toScaledPngBytes(targetWidthPx: Int): ByteArray {
+    val targetHeight = ((height.toFloat() / width.toFloat()) * targetWidthPx)
+        .toInt()
+        .coerceAtLeast(1)
+    val pixels = IntArray(width * height)
+    for (y in 0 until height) {
+        for (x in 0 until width) {
+            pixels[y * width + x] = if (get(x, y)) 0xFF000000.toInt() else 0xFFFFFFFF.toInt()
+        }
+    }
+    val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+    bitmap.setPixels(pixels, 0, width, 0, 0, width, height)
+    val scaled = Bitmap.createScaledBitmap(bitmap, targetWidthPx, targetHeight, false)
+    val stream = ByteArrayOutputStream()
+    scaled.compress(Bitmap.CompressFormat.PNG, 100, stream)
     return stream.toByteArray()
 }
 
