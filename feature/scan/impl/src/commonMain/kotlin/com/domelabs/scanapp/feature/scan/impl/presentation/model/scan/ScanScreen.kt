@@ -1,11 +1,15 @@
 package com.domelabs.scanapp.feature.scan.impl.presentation.model.scan
 
+import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.keyframes
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -16,11 +20,9 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBarsPadding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import org.jetbrains.compose.resources.painterResource
@@ -38,12 +40,23 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.geometry.RoundRect
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.PathFillType
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.domelabs.scanapp.uiComponent.theme.BrightCyan
+import com.domelabs.scanapp.uiComponent.theme.GlowingCyan
 import com.domelabs.scanapp.core.media.MediaItem
 import com.domelabs.scanapp.core.media.compress
 import com.domelabs.scanapp.core.media.rememberMediaPicker
@@ -55,12 +68,19 @@ import com.domelabs.scanapp.feature.scan.impl.presentation.model.ScanMenuDrawerL
 import com.domelabs.scanapp.uiComponent.components.NeoBrutalButton
 import com.domelabs.scanapp.uiComponent.components.NeoBrutalButtonStyle
 import com.domelabs.scanapp.uiComponent.components.NeoBrutalCard
-import com.domelabs.scanapp.uiComponent.modifier.neoBrutalStyle
-import com.domelabs.scanapp.uiComponent.modifier.neoBrutalBorder
 import com.domelabs.scanapp.uiComponent.theme.ScanAppTheme
 import org.koin.compose.koinInject
 import kotlinx.coroutines.launch
-import kotlin.math.roundToInt
+
+private object ScanOverlayColors {
+    val fabBackground = Color(0xFF121826).copy(alpha = 0.62f)
+    val fabBorder = Color.White.copy(alpha = 0.28f)
+    val fabIcon = Color.White.copy(alpha = 0.95f)
+    val flashActive = Color(0xFFFFB74D)
+    val flashActiveIcon = Color(0xFF2A1800)
+    val viewfinderCorner = Color.White.copy(alpha = 0.92f)
+    val scrim = Color.Black.copy(alpha = 0.2f)
+}
 
 @Composable
 fun ScanScreen(
@@ -121,15 +141,7 @@ private fun ScanScreenContent(
                     cooldownMillis = 2_000L,
                     zoomState = zoomState,
                 )
-                AnimatedScanWindow(modifier = Modifier.align(Alignment.Center))
-                if (zoomState.isAvailable) {
-                    ScanZoomSlider(
-                        zoomState = zoomState,
-                        modifier = Modifier
-                            .align(Alignment.CenterEnd)
-                            .padding(end = 16.dp),
-                    )
-                }
+                ScanViewfinderOverlay(modifier = Modifier.fillMaxSize())
             } else {
                 PermissionOverlay(
                     permissionState = state.permission,
@@ -140,6 +152,7 @@ private fun ScanScreenContent(
             ScanOverlayControls(
                 permissionGranted = state.permission == ScanPermissionState.Granted,
                 flashEnabled = state.flashEnabled,
+                zoomState = if (state.permission == ScanPermissionState.Granted) zoomState else null,
                 onToggleFlashlight = { onInteraction(ScanInteraction.ToggleFlashlight) },
                 onGallery = openGalleryPicker,
                 onHistory = { onInteraction(ScanInteraction.NavigateToHistory) },
@@ -157,6 +170,7 @@ private fun ScanScreenContent(
 private fun ScanOverlayControls(
     permissionGranted: Boolean,
     flashEnabled: Boolean,
+    zoomState: CameraZoomState?,
     onToggleFlashlight: () -> Unit,
     onGallery: () -> Unit,
     onHistory: () -> Unit,
@@ -180,56 +194,60 @@ private fun ScanOverlayControls(
                     Icon(
                         painter = painterResource(ScanAppTheme.Icons.menu),
                         contentDescription = "Menu",
-                        tint = MaterialTheme.colorScheme.onSecondaryContainer,
+                        tint = ScanOverlayColors.fabIcon,
                     )
                 },
                 onClick = onSettings,
-                backgroundColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.72f),
             )
         }
 
-        Row(
+        Column(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .fillMaxWidth()
-                .padding(20.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
+                .padding(horizontal = 12.dp, vertical = 20.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            if (permissionGranted) {
-                NeoBrutalTextFab(
-                    icon = {
-                        Icon(
-                            painter = painterResource(if (flashEnabled) ScanAppTheme.Icons.flashOn else ScanAppTheme.Icons.flashOff),
-                            contentDescription = "Flashlight",
-                            tint = if (flashEnabled) {
-                                MaterialTheme.colorScheme.onPrimary
-                            } else {
-                                MaterialTheme.colorScheme.onSecondaryContainer
-                            },
-                        )
-                    },
-                    onClick = onToggleFlashlight,
-                    backgroundColor = if (flashEnabled) {
-                        MaterialTheme.colorScheme.primary.copy(alpha = 0.85f)
-                    } else {
-                        MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.72f)
-                    },
+            if (permissionGranted && zoomState?.isAvailable == true) {
+                ScanZoomSlider(
+                    zoomState = zoomState,
+                    modifier = Modifier.fillMaxWidth(),
                 )
-            } else {
-                SpacerFabPlaceholder()
+                Spacer(modifier = Modifier.height(12.dp))
             }
 
-            NeoBrutalTextFab(
-                icon = {
-                    Icon(
-                        painter = painterResource(ScanAppTheme.Icons.gallery),
-                        contentDescription = "Gallery",
-                        tint = MaterialTheme.colorScheme.onSecondaryContainer,
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+            ) {
+                if (permissionGranted) {
+                    ScanControlButton(
+                        icon = {
+                            Icon(
+                                painter = painterResource(if (flashEnabled) ScanAppTheme.Icons.flashOn else ScanAppTheme.Icons.flashOff),
+                                contentDescription = "Flashlight",
+                                tint = if (flashEnabled) ScanOverlayColors.flashActiveIcon else ScanOverlayColors.fabIcon,
+                            )
+                        },
+                        onClick = onToggleFlashlight,
+                        highlighted = flashEnabled,
+                        highlightColor = ScanOverlayColors.flashActive,
                     )
-                },
-                onClick = onGallery,
-                backgroundColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.72f),
-            )
+                } else {
+                    SpacerFabPlaceholder()
+                }
+
+                ScanControlButton(
+                    icon = {
+                        Icon(
+                            painter = painterResource(ScanAppTheme.Icons.gallery),
+                            contentDescription = "Gallery",
+                            tint = ScanOverlayColors.fabIcon,
+                        )
+                    },
+                    onClick = onGallery,
+                )
+            }
         }
     }
 }
@@ -240,66 +258,82 @@ private fun ScanZoomSlider(
     zoomState: CameraZoomState,
     modifier: Modifier = Modifier,
 ) {
-    val zoomLabel = remember(zoomState.zoomRatio) {
-        val rounded = ((zoomState.zoomRatio * 10f).toInt() / 10f)
-        "${rounded}x"
+    val zoomStep = remember(zoomState.minZoomRatio, zoomState.maxZoomRatio) {
+        ((zoomState.maxZoomRatio - zoomState.minZoomRatio) / 12f).coerceAtLeast(0.05f)
     }
 
-    Column(
-        modifier = modifier
-            .clip(RoundedCornerShape(16.dp))
-            .neoBrutalStyle(
-                backgroundColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.72f),
-                cornerRadius = 16.dp,
-            )
-            .padding(horizontal = 10.dp, vertical = 12.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(4.dp),
+    fun adjustZoom(delta: Float) {
+        zoomState.setZoomRatio(zoomState.zoomRatio + delta)
+        zoomState.onZoomAdjustFinished()
+    }
+
+    Row(
+        modifier = modifier,
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        Text(
-            text = zoomLabel,
-            style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
-            color = MaterialTheme.colorScheme.onSecondaryContainer,
-        )
         Box(
             modifier = Modifier
-                .height(160.dp)
-                .width(40.dp),
+                .size(32.dp)
+                .clickable { adjustZoom(-zoomStep) },
             contentAlignment = Alignment.Center,
         ) {
-            Slider(
-                value = zoomState.zoomRatio,
-                onValueChange = { zoomState.setZoomRatio(it) },
-                onValueChangeFinished = { zoomState.onZoomAdjustFinished() },
-                valueRange = zoomState.minZoomRatio..zoomState.maxZoomRatio,
-                modifier = Modifier
-                    .width(160.dp)
-                    .rotate(-90f),
-                colors = SliderDefaults.colors(
-                    thumbColor = MaterialTheme.colorScheme.primary,
-                    activeTrackColor = MaterialTheme.colorScheme.primary,
-                    inactiveTrackColor = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.25f),
-                ),
+            Icon(
+                painter = painterResource(ScanAppTheme.Icons.zoomOut),
+                contentDescription = "Zoom out",
+                tint = ScanOverlayColors.fabIcon,
+                modifier = Modifier.size(20.dp),
+            )
+        }
+
+        Slider(
+            value = zoomState.zoomRatio,
+            onValueChange = { zoomState.setZoomRatio(it) },
+            onValueChangeFinished = { zoomState.onZoomAdjustFinished() },
+            valueRange = zoomState.minZoomRatio..zoomState.maxZoomRatio,
+            modifier = Modifier
+                .weight(1f)
+                .height(28.dp),
+            colors = SliderDefaults.colors(
+                thumbColor = BrightCyan,
+                activeTrackColor = BrightCyan,
+                inactiveTrackColor = Color.White.copy(alpha = 0.22f),
+            ),
+        )
+
+        Box(
+            modifier = Modifier
+                .size(32.dp)
+                .clickable { adjustZoom(zoomStep) },
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(
+                painter = painterResource(ScanAppTheme.Icons.zoomIn),
+                contentDescription = "Zoom in",
+                tint = ScanOverlayColors.fabIcon,
+                modifier = Modifier.size(20.dp),
             )
         }
     }
 }
 
 @Composable
-private fun NeoBrutalTextFab(
+private fun ScanControlButton(
     icon: @Composable () -> Unit,
     onClick: () -> Unit,
-    backgroundColor: androidx.compose.ui.graphics.Color,
     modifier: Modifier = Modifier,
+    highlighted: Boolean = false,
+    highlightColor: Color = ScanOverlayColors.fabBackground,
 ) {
+    val background = if (highlighted) highlightColor.copy(alpha = 0.92f) else ScanOverlayColors.fabBackground
+    val border = if (highlighted) highlightColor.copy(alpha = 0.95f) else ScanOverlayColors.fabBorder
+
     Box(
         modifier = modifier
-            .size(56.dp)
+            .size(52.dp)
             .clip(CircleShape)
-            .neoBrutalStyle(
-                backgroundColor = backgroundColor,
-                cornerRadius = 28.dp,
-            )
+            .background(background)
+            .border(1.dp, border, CircleShape)
             .clickable(onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
@@ -308,46 +342,217 @@ private fun NeoBrutalTextFab(
 }
 
 @Composable
-private fun SpacerFabPlaceholder() {
-    Box(modifier = Modifier.size(56.dp))
+private fun NeoBrutalTextFab(
+    icon: @Composable () -> Unit,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    ScanControlButton(
+        icon = icon,
+        onClick = onClick,
+        modifier = modifier,
+    )
 }
 
 @Composable
-private fun AnimatedScanWindow(
+private fun SpacerFabPlaceholder() {
+    Box(modifier = Modifier.size(52.dp))
+}
+
+@Composable
+private fun ScanViewfinderOverlay(
     modifier: Modifier = Modifier,
 ) {
     BoxWithConstraints(modifier = modifier) {
-        val scanBoxSize = maxWidth.coerceAtMost(maxHeight) * 0.65f
-        val lineHeight = 4.dp
-        val transition = rememberInfiniteTransition(label = "scan-line")
-        val progress by transition.animateFloat(
-            initialValue = 0f,
+        val density = LocalDensity.current
+        val frameSize = minOf(maxWidth, maxHeight) * 0.68f
+        val frameSizePx = with(density) { frameSize.toPx() }
+        val cornerRadiusPx = with(density) { 22.dp.toPx() }
+        val cornerArmPx = with(density) { (frameSize * 0.14f).toPx() }
+        val strokePx = with(density) { 3.dp.toPx() }
+
+        val transition = rememberInfiniteTransition(label = "scan-viewfinder")
+        val cornerPulse by transition.animateFloat(
+            initialValue = 0.72f,
             targetValue = 1f,
             animationSpec = infiniteRepeatable(
-                animation = tween(durationMillis = 1500),
+                animation = tween(durationMillis = 1400),
                 repeatMode = RepeatMode.Reverse,
             ),
-            label = "scan-line-progress",
+            label = "corner-pulse",
         )
-        val lineTravelPx = with(LocalDensity.current) { (scanBoxSize - lineHeight).toPx() }
 
-        Box(
-            modifier = Modifier.size(scanBoxSize).neoBrutalBorder()
-        ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(lineHeight)
-                    .offset {
-                        IntOffset(
-                            x = 0,
-                            y = (lineTravelPx * progress).roundToInt(),
-                        )
-                    }
-                    .background(MaterialTheme.colorScheme.primary)
+        Canvas(modifier = Modifier.fillMaxSize()) {
+            val frameLeft = (size.width - frameSizePx) / 2f
+            val frameTop = (size.height - frameSizePx) / 2f
+            val hole = RoundRect(
+                rect = Rect(
+                    offset = Offset(frameLeft, frameTop),
+                    size = Size(frameSizePx, frameSizePx),
+                ),
+                cornerRadius = CornerRadius(cornerRadiusPx, cornerRadiusPx),
+            )
+
+            val scrimPath = Path().apply {
+                addRect(Rect(Offset.Zero, size))
+                addRoundRect(hole)
+                fillType = PathFillType.EvenOdd
+            }
+            drawPath(scrimPath, ScanOverlayColors.scrim)
+
+            val cornerColor = ScanOverlayColors.viewfinderCorner.copy(alpha = cornerPulse)
+            drawViewfinderCorner(
+                origin = Offset(frameLeft, frameTop),
+                armLength = cornerArmPx,
+                cornerRadius = cornerRadiusPx,
+                stroke = strokePx,
+                color = cornerColor,
+                quadrant = ViewfinderQuadrant.TopLeft,
+            )
+            drawViewfinderCorner(
+                origin = Offset(frameLeft + frameSizePx, frameTop),
+                armLength = cornerArmPx,
+                cornerRadius = cornerRadiusPx,
+                stroke = strokePx,
+                color = cornerColor,
+                quadrant = ViewfinderQuadrant.TopRight,
+            )
+            drawViewfinderCorner(
+                origin = Offset(frameLeft, frameTop + frameSizePx),
+                armLength = cornerArmPx,
+                cornerRadius = cornerRadiusPx,
+                stroke = strokePx,
+                color = cornerColor,
+                quadrant = ViewfinderQuadrant.BottomLeft,
+            )
+            drawViewfinderCorner(
+                origin = Offset(frameLeft + frameSizePx, frameTop + frameSizePx),
+                armLength = cornerArmPx,
+                cornerRadius = cornerRadiusPx,
+                stroke = strokePx,
+                color = cornerColor,
+                quadrant = ViewfinderQuadrant.BottomRight,
             )
         }
     }
+}
+
+private const val ScanBeamCycleMillis = 4000
+
+private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawScanBeam(
+    frameLeft: Float,
+    frameWidth: Float,
+    beamY: Float,
+    accent: Color,
+    beamHeightPx: Float,
+    glowSpreadPx: Float,
+) {
+    val horizontalInset = frameWidth * 0.03f
+    val beamLeft = frameLeft + horizontalInset
+    val beamWidth = frameWidth - horizontalInset * 2f
+    val sideExtension = glowSpreadPx * 2.5f
+    val drawLeft = beamLeft - sideExtension
+    val drawWidth = beamWidth + sideExtension * 2f
+
+    fun horizontalGlowStops(peakAlpha: Float) = arrayOf(
+        0f to Color.Transparent,
+        0.08f to accent.copy(alpha = peakAlpha * 0.25f),
+        0.22f to accent.copy(alpha = peakAlpha * 0.65f),
+        0.5f to accent.copy(alpha = peakAlpha),
+        0.78f to accent.copy(alpha = peakAlpha * 0.65f),
+        0.92f to accent.copy(alpha = peakAlpha * 0.25f),
+        1f to Color.Transparent,
+    )
+
+    drawOval(
+        brush = Brush.horizontalGradient(
+            colorStops = horizontalGlowStops(0.2f),
+            startX = drawLeft,
+            endX = drawLeft + drawWidth,
+        ),
+        topLeft = Offset(drawLeft, beamY - glowSpreadPx),
+        size = Size(drawWidth, glowSpreadPx * 2.4f),
+    )
+
+    drawOval(
+        brush = Brush.horizontalGradient(
+            colorStops = horizontalGlowStops(0.5f),
+            startX = drawLeft,
+            endX = drawLeft + drawWidth,
+        ),
+        topLeft = Offset(drawLeft, beamY - glowSpreadPx * 0.55f),
+        size = Size(drawWidth, glowSpreadPx * 1.1f),
+    )
+
+    drawOval(
+        brush = Brush.horizontalGradient(
+            colorStops = arrayOf(
+                0f to Color.Transparent,
+                0.06f to accent.copy(alpha = 0.45f),
+                0.2f to accent.copy(alpha = 0.82f),
+                0.5f to Color.White.copy(alpha = 0.98f),
+                0.8f to accent.copy(alpha = 0.82f),
+                0.94f to accent.copy(alpha = 0.45f),
+                1f to Color.Transparent,
+            ),
+            startX = drawLeft,
+            endX = drawLeft + drawWidth,
+        ),
+        topLeft = Offset(drawLeft, beamY - beamHeightPx / 2f),
+        size = Size(drawWidth, beamHeightPx.coerceAtLeast(glowSpreadPx * 0.35f)),
+    )
+}
+
+private enum class ViewfinderQuadrant {
+    TopLeft,
+    TopRight,
+    BottomLeft,
+    BottomRight,
+}
+
+private fun androidx.compose.ui.graphics.drawscope.DrawScope.drawViewfinderCorner(
+    origin: Offset,
+    armLength: Float,
+    cornerRadius: Float,
+    stroke: Float,
+    color: Color,
+    quadrant: ViewfinderQuadrant,
+) {
+    val path = Path()
+    when (quadrant) {
+        ViewfinderQuadrant.TopLeft -> {
+            path.moveTo(origin.x, origin.y + armLength)
+            path.lineTo(origin.x, origin.y + cornerRadius)
+            path.quadraticTo(origin.x, origin.y, origin.x + cornerRadius, origin.y)
+            path.lineTo(origin.x + armLength, origin.y)
+        }
+
+        ViewfinderQuadrant.TopRight -> {
+            path.moveTo(origin.x - armLength, origin.y)
+            path.lineTo(origin.x - cornerRadius, origin.y)
+            path.quadraticTo(origin.x, origin.y, origin.x, origin.y + cornerRadius)
+            path.lineTo(origin.x, origin.y + armLength)
+        }
+
+        ViewfinderQuadrant.BottomLeft -> {
+            path.moveTo(origin.x, origin.y - armLength)
+            path.lineTo(origin.x, origin.y - cornerRadius)
+            path.quadraticTo(origin.x, origin.y, origin.x + cornerRadius, origin.y)
+            path.lineTo(origin.x + armLength, origin.y)
+        }
+
+        ViewfinderQuadrant.BottomRight -> {
+            path.moveTo(origin.x - armLength, origin.y)
+            path.lineTo(origin.x - cornerRadius, origin.y)
+            path.quadraticTo(origin.x, origin.y, origin.x, origin.y - cornerRadius)
+            path.lineTo(origin.x, origin.y - armLength)
+        }
+    }
+    drawPath(
+        path = path,
+        color = color,
+        style = Stroke(width = stroke, cap = StrokeCap.Round),
+    )
 }
 
 @Composable

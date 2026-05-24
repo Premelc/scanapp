@@ -85,10 +85,14 @@ import scan_app.uicomponent.generated.resources.ic_user
 import scan_app.uicomponent.generated.resources.ic_user_add
 import scan_app.uicomponent.generated.resources.ic_vibrate
 import scan_app.uicomponent.generated.resources.ic_warning
+import scan_app.uicomponent.generated.resources.ic_zoom_in
+import scan_app.uicomponent.generated.resources.ic_zoom_out
 import scan_app.uicomponent.generated.resources.im_app
 
 object ScanAppTheme {
     object Icons {
+        val zoomIn = Res.drawable.ic_zoom_in
+        val zoomOut = Res.drawable.ic_zoom_out
         val menu = Res.drawable.ic_menu
         val barcode = Res.drawable.ic_barcode
         val qr = Res.drawable.ic_qr
