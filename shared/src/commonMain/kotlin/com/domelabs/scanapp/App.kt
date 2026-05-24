@@ -14,6 +14,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import com.domelabs.scanapp.core.ads.TopBannerAd
 import com.domelabs.scanapp.core.navigation.NavRoute
+import com.domelabs.scanapp.notification.AppConfirmationHost
 import com.domelabs.scanapp.notification.AppSnackbarHost
 import com.domelabs.scanapp.core.permission.PermissionChecker
 import com.domelabs.scanapp.core.permission.PermissionRequester
@@ -54,6 +55,7 @@ fun App() {
                             .fillMaxWidth(),
                         snackbarHost = { AppSnackbarHost() },
                     ) {
+                        AppConfirmationHost()
                         NavigationEffect()
                         NavHost()
                     }

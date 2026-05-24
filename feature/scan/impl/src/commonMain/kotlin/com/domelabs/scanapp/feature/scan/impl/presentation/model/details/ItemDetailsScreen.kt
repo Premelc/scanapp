@@ -165,16 +165,13 @@ private fun ItemDetailsContent(
                 }
             }
 
-            CollectionChipRow(
+            ItemMetadataSection(
                 collection = state.collection,
-                onClick = { onInteraction(ItemDetailsInteraction.OpenCollectionPicker) },
-            )
-
-            CustomNameEditor(
-                draft = state.customNameDraft,
-                limit = state.customNameLimit,
-                onDraftChange = { onInteraction(ItemDetailsInteraction.UpdateCustomNameDraft(it)) },
-                onCommit = { onInteraction(ItemDetailsInteraction.CommitCustomName) },
+                customNameDraft = state.customNameDraft,
+                customNameLimit = state.customNameLimit,
+                onCollectionClick = { onInteraction(ItemDetailsInteraction.OpenCollectionPicker) },
+                onCustomNameChange = { onInteraction(ItemDetailsInteraction.UpdateCustomNameDraft(it)) },
+                onCustomNameCommit = { onInteraction(ItemDetailsInteraction.CommitCustomName) },
             )
 
             Row(
@@ -251,48 +248,76 @@ private fun ItemDetailsContent(
 }
 
 @Composable
+private fun ItemMetadataSection(
+    collection: Collection?,
+    customNameDraft: String,
+    customNameLimit: Int,
+    onCollectionClick: () -> Unit,
+    onCustomNameChange: (String) -> Unit,
+    onCustomNameCommit: () -> Unit,
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        CollectionChipRow(
+            collection = collection,
+            onClick = onCollectionClick,
+        )
+        CustomNameEditor(
+            draft = customNameDraft,
+            limit = customNameLimit,
+            onDraftChange = onCustomNameChange,
+            onCommit = onCustomNameCommit,
+        )
+    }
+}
+
+@Composable
 private fun CollectionChipRow(
     collection: Collection?,
     onClick: () -> Unit,
 ) {
-    NeoBrutalCard(modifier = Modifier.fillMaxWidth()) {
-        Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-            Text(
-                text = "Collection",
-                style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold),
-            )
-            Row(
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            text = "Collection",
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        Row(
+            modifier = Modifier
+                .clip(RoundedCornerShape(999.dp))
+                .clickable(onClick = onClick)
+                .border(1.dp, NeoBlack, RoundedCornerShape(999.dp))
+                .padding(horizontal = 10.dp, vertical = 5.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
+        ) {
+            Box(
                 modifier = Modifier
-                    .clip(RoundedCornerShape(999.dp))
-                    .clickable(onClick = onClick)
-                    .border(1.dp, NeoBlack, RoundedCornerShape(999.dp))
-                    .padding(horizontal = 12.dp, vertical = 8.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                Box(
-                    modifier = Modifier
-                        .size(14.dp)
-                        .clip(CircleShape)
-                        .background(
-                            collection?.colorHex
-                                ?.let { parseHexColor(it) }
-                                ?: Color.Gray
-                        )
-                        .border(1.dp, NeoBlack, CircleShape),
-                )
-                Text(
-                    text = collection?.name ?: "Unspecified",
-                    style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
-                )
-                Text(
-                    text = "Change",
-                    style = MaterialTheme.typography.labelMedium.copy(
-                        textDecoration = TextDecoration.Underline,
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.65f),
-                    ),
-                )
-            }
+                    .size(10.dp)
+                    .clip(CircleShape)
+                    .background(
+                        collection?.colorHex
+                            ?.let { parseHexColor(it) }
+                            ?: Color.Gray
+                    )
+                    .border(1.dp, NeoBlack, CircleShape),
+            )
+            Text(
+                text = collection?.name ?: "Unspecified",
+                style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+            Text(
+                text = "Change",
+                style = MaterialTheme.typography.labelSmall.copy(
+                    textDecoration = TextDecoration.Underline,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.55f),
+                ),
+            )
         }
     }
 }
@@ -304,32 +329,31 @@ private fun CustomNameEditor(
     onDraftChange: (String) -> Unit,
     onCommit: () -> Unit,
 ) {
-    NeoBrutalCard(modifier = Modifier.fillMaxWidth()) {
-        Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Text(
-                    text = "Custom name",
-                    style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold),
-                )
-                Text(
-                    text = "${draft.length} / $limit",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-            NeoBrutalTextField(
-                value = draft,
-                onValueChange = onDraftChange,
-                placeholder = "Optional name (max $limit chars)",
-                modifier = Modifier.onFocusChanged { focusState ->
-                    if (!focusState.isFocused) onCommit()
-                },
+    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                text = "Custom name",
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Text(
+                text = "${draft.length}/$limit",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
+        NeoBrutalTextField(
+            value = draft,
+            onValueChange = onDraftChange,
+            placeholder = "Optional",
+            modifier = Modifier.onFocusChanged { focusState ->
+                if (!focusState.isFocused) onCommit()
+            },
+        )
     }
 }
 

@@ -17,7 +17,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -87,17 +86,6 @@ fun CollectionDetailScreen(id: Long) {
             onInteraction = viewModel::onInteraction,
         )
     }
-
-    if (state.showDeleteDialog) {
-        DeleteCollectionDialog(
-            collectionName = state.collection?.name ?: "",
-            onCascade = { viewModel.onInteraction(CollectionDetailInteraction.ConfirmDeleteAndCascade) },
-            onMoveToUnspecified = {
-                viewModel.onInteraction(CollectionDetailInteraction.ConfirmDeleteAndMoveToUnspecified)
-            },
-            onDismiss = { viewModel.onInteraction(CollectionDetailInteraction.DismissDeleteDialog) },
-        )
-    }
 }
 
 @Composable
@@ -149,7 +137,7 @@ private fun Header(
                         )
                         DropdownMenuItem(
                             text = { Text("Delete") },
-                            onClick = { onInteraction(CollectionDetailInteraction.OpenDeleteDialog) },
+                            onClick = { onInteraction(CollectionDetailInteraction.OpenDeleteConfirmation) },
                         )
                     }
                 }
@@ -356,49 +344,4 @@ private fun ColorSwatch(
             )
         }
     }
-}
-
-@Composable
-private fun DeleteCollectionDialog(
-    collectionName: String,
-    onCascade: () -> Unit,
-    onMoveToUnspecified: () -> Unit,
-    onDismiss: () -> Unit,
-) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = {
-            Text(
-                text = "Delete \"$collectionName\"?",
-                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-            )
-        },
-        text = {
-            Text(
-                text = "Choose what to do with items in this collection.",
-                style = MaterialTheme.typography.bodyMedium,
-            )
-        },
-        confirmButton = {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                NeoBrutalButton(
-                    text = "Delete items too",
-                    style = NeoBrutalButtonStyle.Primary,
-                    onClick = onCascade,
-                )
-                NeoBrutalButton(
-                    text = "Move to Unspecified",
-                    style = NeoBrutalButtonStyle.Secondary,
-                    onClick = onMoveToUnspecified,
-                )
-            }
-        },
-        dismissButton = {
-            NeoBrutalButton(
-                text = "Cancel",
-                style = NeoBrutalButtonStyle.Secondary,
-                onClick = onDismiss,
-            )
-        },
-    )
 }

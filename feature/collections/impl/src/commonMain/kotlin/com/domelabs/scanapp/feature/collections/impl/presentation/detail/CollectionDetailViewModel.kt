@@ -4,6 +4,11 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.domelabs.scanapp.core.navigation.NavRoute
 import com.domelabs.scanapp.core.navigation.NavigationDispatcher
+import com.domelabs.scanapp.core.notification.AppConfirmationDispatcher
+import com.domelabs.scanapp.core.notification.AppConfirmationRequest
+import com.domelabs.scanapp.core.notification.AppSnackbarDispatcher
+import com.domelabs.scanapp.core.notification.AppSnackbarEvent
+import com.domelabs.scanapp.core.notification.AppSnackbarKind
 import com.domelabs.scanapp.feature.collections.impl.domain.error.CollectionsError
 import com.domelabs.scanapp.feature.collections.impl.domain.repository.CollectionsRepository
 import com.domelabs.scanapp.feature.collections.impl.domain.usecase.DeleteCollectionUseCase
@@ -36,7 +41,6 @@ class CollectionDetailViewModel(
     private val searchQuery = MutableStateFlow("")
     private val showOverflowMenu = MutableStateFlow(false)
     private val editForm = MutableStateFlow<EditCollectionForm?>(null)
-    private val showDeleteDialog = MutableStateFlow(false)
 
     private val collectionFlow = collectionsRepository.observeCollectionById(id)
 
@@ -54,16 +58,13 @@ class CollectionDetailViewModel(
         showOverflowMenu,
         editForm,
     ) { collection, items, query, overflow, form ->
-        Snapshot(collection, items, query, overflow, form)
-    }.combine(showDeleteDialog) { snap, deleteDialog ->
         CollectionDetailViewState(
-            collection = snap.collection,
-            items = snap.items,
-            searchQuery = snap.query,
-            isSearching = snap.query.isNotBlank(),
-            showOverflowMenu = snap.overflow,
-            editForm = snap.form,
-            showDeleteDialog = deleteDialog,
+            collection = collection,
+            items = items,
+            searchQuery = query,
+            isSearching = query.isNotBlank(),
+            showOverflowMenu = overflow,
+            editForm = form,
             availableColors = CollectionPickerColors.palette,
         )
     }.stateIn(
@@ -116,17 +117,7 @@ class CollectionDetailViewModel(
 
             CollectionDetailInteraction.SubmitEdit -> submitEdit()
 
-            CollectionDetailInteraction.OpenDeleteDialog -> {
-                showOverflowMenu.value = false
-                showDeleteDialog.value = true
-            }
-
-            CollectionDetailInteraction.DismissDeleteDialog -> {
-                showDeleteDialog.value = false
-            }
-
-            CollectionDetailInteraction.ConfirmDeleteAndCascade -> deleteCollection(cascade = true)
-            CollectionDetailInteraction.ConfirmDeleteAndMoveToUnspecified -> deleteCollection(cascade = false)
+            CollectionDetailInteraction.OpenDeleteConfirmation -> requestDeleteConfirmation()
         }
     }
 
@@ -172,16 +163,42 @@ class CollectionDetailViewModel(
                 }
             }
             editForm.value = null
+            AppSnackbarDispatcher.dispatch(
+                AppSnackbarEvent(
+                    title = "Collection updated",
+                    kind = AppSnackbarKind.Success,
+                    durationMillis = 3_500L,
+                )
+            )
         }
     }
 
-    private fun deleteCollection(cascade: Boolean) {
+    private fun requestDeleteConfirmation() {
         val current = viewState.value.collection ?: return
-        viewModelScope.launch {
-            deleteCollectionUseCase(current.id, cascadeDeleteItems = cascade)
-            showDeleteDialog.value = false
-            NavigationDispatcher.back()
-        }
+        showOverflowMenu.value = false
+        AppConfirmationDispatcher.show(
+            AppConfirmationRequest(
+                title = "Delete \"${current.name}\"?",
+                message = "Choose what to do with items in this collection.",
+                confirmLabel = "Delete items too",
+                secondaryConfirmLabel = "Move to Unspecified",
+                onConfirm = { deleteCollection(cascade = true) },
+                onSecondaryConfirm = { deleteCollection(cascade = false) },
+            )
+        )
+    }
+
+    private suspend fun deleteCollection(cascade: Boolean) {
+        val current = viewState.value.collection ?: return
+        deleteCollectionUseCase(current.id, cascadeDeleteItems = cascade)
+        AppSnackbarDispatcher.dispatch(
+            AppSnackbarEvent(
+                title = "Collection deleted",
+                kind = AppSnackbarKind.Success,
+                durationMillis = 3_500L,
+            )
+        )
+        NavigationDispatcher.back()
     }
 
     private fun mapErrorMessage(throwable: Throwable?): String = when (throwable) {
@@ -190,14 +207,6 @@ class CollectionDetailViewModel(
         CollectionsError.CollectionNotFound -> "Collection no longer exists"
         else -> "Something went wrong"
     }
-
-    private data class Snapshot(
-        val collection: com.domelabs.scanapp.feature.collections.impl.domain.model.Collection?,
-        val items: List<com.domelabs.scanapp.feature.collections.impl.domain.model.ScannedItem>,
-        val query: String,
-        val overflow: Boolean,
-        val form: EditCollectionForm?,
-    )
 
     companion object {
         private const val SEARCH_DEBOUNCE_MILLIS = 300L

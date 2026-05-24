@@ -3,6 +3,9 @@ package com.domelabs.scanapp.feature.collections.impl.presentation.create
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.domelabs.scanapp.core.persistence.database.UnspecifiedCollection
+import com.domelabs.scanapp.core.notification.AppSnackbarDispatcher
+import com.domelabs.scanapp.core.notification.AppSnackbarEvent
+import com.domelabs.scanapp.core.notification.AppSnackbarKind
 import com.domelabs.scanapp.feature.collections.impl.domain.error.CollectionsError
 import com.domelabs.scanapp.feature.collections.impl.domain.usecase.CreateCollectionUseCase
 import com.domelabs.scanapp.feature.collections.impl.presentation.picker.CollectionPickerColors
@@ -94,6 +97,13 @@ class CreateCollectionViewModel(
                 onSuccess = { created ->
                     name.value = ""
                     error.value = null
+                    AppSnackbarDispatcher.dispatch(
+                        AppSnackbarEvent(
+                            title = "\"$trimmed\" created",
+                            kind = AppSnackbarKind.Success,
+                            durationMillis = 3_500L,
+                        )
+                    )
                     createdEventsMutable.emit(created.id)
                 },
                 onFailure = { failure ->

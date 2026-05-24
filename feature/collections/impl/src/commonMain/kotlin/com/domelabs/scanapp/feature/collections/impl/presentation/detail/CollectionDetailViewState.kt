@@ -10,7 +10,6 @@ data class CollectionDetailViewState(
     val isSearching: Boolean = false,
     val showOverflowMenu: Boolean = false,
     val editForm: EditCollectionForm? = null,
-    val showDeleteDialog: Boolean = false,
     val availableColors: List<String> = emptyList(),
 )
 

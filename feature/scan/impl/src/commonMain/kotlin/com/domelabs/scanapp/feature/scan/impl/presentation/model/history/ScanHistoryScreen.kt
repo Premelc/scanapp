@@ -105,7 +105,7 @@ fun ScanHistoryScreen(
                             NeoBrutalIconBadgeButton(
                                 icon = ScanAppTheme.Icons.trash,
                                 contentDescription = "Delete scan",
-                                onClick = { viewModel.onDelete(item.id) },
+                                onClick = { viewModel.onDelete(item) },
                             )
                         }
                     }

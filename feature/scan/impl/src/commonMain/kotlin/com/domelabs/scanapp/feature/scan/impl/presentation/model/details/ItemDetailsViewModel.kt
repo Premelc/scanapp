@@ -3,6 +3,11 @@ package com.domelabs.scanapp.feature.scan.impl.presentation.model.details
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.domelabs.scanapp.core.navigation.NavigationDispatcher
+import com.domelabs.scanapp.core.notification.AppConfirmationDispatcher
+import com.domelabs.scanapp.core.notification.AppConfirmationRequest
+import com.domelabs.scanapp.core.notification.AppSnackbarDispatcher
+import com.domelabs.scanapp.core.notification.AppSnackbarEvent
+import com.domelabs.scanapp.core.notification.AppSnackbarKind
 import com.domelabs.scanapp.feature.collections.impl.domain.model.Collection
 import com.domelabs.scanapp.feature.collections.impl.domain.repository.CollectionsRepository
 import com.domelabs.scanapp.feature.collections.impl.domain.usecase.DeleteItemUseCase
@@ -64,10 +69,7 @@ class ItemDetailsViewModel(
                 NavigationDispatcher.back()
             }
 
-            ItemDetailsInteraction.Delete -> viewModelScope.launch {
-                deleteItemUseCase(id)
-                NavigationDispatcher.back()
-            }
+            ItemDetailsInteraction.Delete -> requestDeleteConfirmation()
 
             ItemDetailsInteraction.Share -> {
                 showShareSheet.value = true
@@ -89,6 +91,15 @@ class ItemDetailsViewModel(
                 showCollectionPicker.value = false
                 viewModelScope.launch {
                     moveItemToCollectionUseCase(id, interaction.collectionId)
+                    val collectionName = collectionsRepository.getById(interaction.collectionId)?.name
+                        ?: "collection"
+                    AppSnackbarDispatcher.dispatch(
+                        AppSnackbarEvent(
+                            title = "Moved to $collectionName",
+                            kind = AppSnackbarKind.Success,
+                            durationMillis = 3_500L,
+                        )
+                    )
                 }
             }
 
@@ -103,8 +114,38 @@ class ItemDetailsViewModel(
                 viewModelScope.launch {
                     renameItemUseCase(id, normalized)
                     customNameDraft.value = null
+                    AppSnackbarDispatcher.dispatch(
+                        AppSnackbarEvent(
+                            title = if (normalized == null) "Custom name cleared" else "Custom name saved",
+                            kind = AppSnackbarKind.Success,
+                            durationMillis = 3_500L,
+                        )
+                    )
                 }
             }
         }
+    }
+
+    private fun requestDeleteConfirmation() {
+        val item = viewState.value.item
+        val label = item?.customName ?: item?.rawValue ?: "this item"
+        AppConfirmationDispatcher.show(
+            AppConfirmationRequest(
+                title = "Delete item?",
+                message = "\"$label\" will be permanently removed.",
+                confirmLabel = "Delete",
+                onConfirm = {
+                    deleteItemUseCase(id)
+                    AppSnackbarDispatcher.dispatch(
+                        AppSnackbarEvent(
+                            title = "Item deleted",
+                            kind = AppSnackbarKind.Success,
+                            durationMillis = 3_500L,
+                        )
+                    )
+                    NavigationDispatcher.back()
+                },
+            )
+        )
     }
 }

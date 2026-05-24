@@ -16,8 +16,5 @@ sealed interface CollectionDetailInteraction {
     data class SelectEditColor(val colorHex: String) : CollectionDetailInteraction
     data object SubmitEdit : CollectionDetailInteraction
 
-    data object OpenDeleteDialog : CollectionDetailInteraction
-    data object DismissDeleteDialog : CollectionDetailInteraction
-    data object ConfirmDeleteAndCascade : CollectionDetailInteraction
-    data object ConfirmDeleteAndMoveToUnspecified : CollectionDetailInteraction
+    data object OpenDeleteConfirmation : CollectionDetailInteraction
 }
