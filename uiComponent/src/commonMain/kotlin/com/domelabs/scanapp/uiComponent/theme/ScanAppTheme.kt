@@ -10,6 +10,7 @@ import scan_app.uicomponent.generated.resources.ic_add_folder
 import scan_app.uicomponent.generated.resources.ic_add_square
 import scan_app.uicomponent.generated.resources.ic_arrow_down
 import scan_app.uicomponent.generated.resources.ic_arrow_left
+import scan_app.uicomponent.generated.resources.ic_barcode
 import scan_app.uicomponent.generated.resources.ic_bug
 import scan_app.uicomponent.generated.resources.ic_chart
 import scan_app.uicomponent.generated.resources.ic_check_circle
@@ -63,6 +64,7 @@ import scan_app.uicomponent.generated.resources.ic_pause
 import scan_app.uicomponent.generated.resources.ic_performance
 import scan_app.uicomponent.generated.resources.ic_play
 import scan_app.uicomponent.generated.resources.ic_podman
+import scan_app.uicomponent.generated.resources.ic_qr
 import scan_app.uicomponent.generated.resources.ic_refresh
 import scan_app.uicomponent.generated.resources.ic_restart
 import scan_app.uicomponent.generated.resources.ic_router
@@ -88,6 +90,8 @@ import scan_app.uicomponent.generated.resources.im_app
 object ScanAppTheme {
     object Icons {
         val menu = Res.drawable.ic_menu
+        val barcode = Res.drawable.ic_barcode
+        val qr = Res.drawable.ic_qr
         val gallery = Res.drawable.ic_gallery
         val flashOn = Res.drawable.ic_flash_on
         val flashOff = Res.drawable.ic_flash_off

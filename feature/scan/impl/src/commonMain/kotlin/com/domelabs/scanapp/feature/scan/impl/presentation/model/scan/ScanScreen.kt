@@ -20,18 +20,25 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBarsPadding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import org.jetbrains.compose.resources.painterResource
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Slider
+import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.IntOffset
@@ -40,7 +47,9 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.domelabs.scanapp.core.media.MediaItem
 import com.domelabs.scanapp.core.media.compress
 import com.domelabs.scanapp.core.media.rememberMediaPicker
+import com.domelabs.scanapp.core.scan.CameraZoomState
 import com.domelabs.scanapp.core.scan.CodeScanner
+import com.domelabs.scanapp.core.scan.rememberCameraZoomState
 import com.domelabs.scanapp.core.scan.rememberGalleryCodeScanner
 import com.domelabs.scanapp.feature.scan.impl.presentation.model.ScanMenuDrawerLayout
 import com.domelabs.scanapp.uiComponent.components.NeoBrutalButton
@@ -59,6 +68,7 @@ fun ScanScreen(
 ) {
     val state by viewModel.viewState.collectAsStateWithLifecycle()
     val scope = rememberCoroutineScope()
+    val zoomState = rememberCameraZoomState()
     val galleryCodeScanner = rememberGalleryCodeScanner()
     val openGalleryPicker = rememberMediaPicker { mediaItems ->
         val image = mediaItems.firstOrNull { it is MediaItem.Image } as? MediaItem.Image ?: return@rememberMediaPicker
@@ -79,6 +89,7 @@ fun ScanScreen(
 
     ScanScreenContent(
         state = state,
+        zoomState = zoomState,
         onInteraction = viewModel::onInteraction,
         openGalleryPicker = openGalleryPicker,
     )
@@ -87,6 +98,7 @@ fun ScanScreen(
 @Composable
 private fun ScanScreenContent(
     state: ScanViewState,
+    zoomState: CameraZoomState,
     onInteraction: (ScanInteraction) -> Unit,
     openGalleryPicker: () -> Unit,
 ) {
@@ -107,8 +119,17 @@ private fun ScanScreenContent(
                     onDetected = { onInteraction(ScanInteraction.CodeDetected(it)) },
                     onError = { onInteraction(ScanInteraction.ScanFailed(it)) },
                     cooldownMillis = 2_000L,
+                    zoomState = zoomState,
                 )
                 AnimatedScanWindow(modifier = Modifier.align(Alignment.Center))
+                if (zoomState.isAvailable) {
+                    ScanZoomSlider(
+                        zoomState = zoomState,
+                        modifier = Modifier
+                            .align(Alignment.CenterEnd)
+                            .padding(end = 16.dp),
+                    )
+                }
             } else {
                 PermissionOverlay(
                     permissionState = state.permission,
@@ -208,6 +229,57 @@ private fun ScanOverlayControls(
                 },
                 onClick = onGallery,
                 backgroundColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.72f),
+            )
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun ScanZoomSlider(
+    zoomState: CameraZoomState,
+    modifier: Modifier = Modifier,
+) {
+    val zoomLabel = remember(zoomState.zoomRatio) {
+        val rounded = ((zoomState.zoomRatio * 10f).toInt() / 10f)
+        "${rounded}x"
+    }
+
+    Column(
+        modifier = modifier
+            .clip(RoundedCornerShape(16.dp))
+            .neoBrutalStyle(
+                backgroundColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.72f),
+                cornerRadius = 16.dp,
+            )
+            .padding(horizontal = 10.dp, vertical = 12.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(4.dp),
+    ) {
+        Text(
+            text = zoomLabel,
+            style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
+            color = MaterialTheme.colorScheme.onSecondaryContainer,
+        )
+        Box(
+            modifier = Modifier
+                .height(160.dp)
+                .width(40.dp),
+            contentAlignment = Alignment.Center,
+        ) {
+            Slider(
+                value = zoomState.zoomRatio,
+                onValueChange = { zoomState.setZoomRatio(it) },
+                onValueChangeFinished = { zoomState.onZoomAdjustFinished() },
+                valueRange = zoomState.minZoomRatio..zoomState.maxZoomRatio,
+                modifier = Modifier
+                    .width(160.dp)
+                    .rotate(-90f),
+                colors = SliderDefaults.colors(
+                    thumbColor = MaterialTheme.colorScheme.primary,
+                    activeTrackColor = MaterialTheme.colorScheme.primary,
+                    inactiveTrackColor = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.25f),
+                ),
             )
         }
     }

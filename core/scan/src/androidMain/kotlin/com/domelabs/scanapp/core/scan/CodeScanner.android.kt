@@ -172,27 +172,26 @@ actual fun CodeScanner(
     DisposableEffect(boundCamera, zoomState, lifecycleOwner) {
         val camera = boundCamera
         val state = zoomState
-        if (camera == null || state == null) {
+        if (camera != null && state != null) {
+            state.applyZoomRatio = { ratio ->
+                runCatching { camera.cameraControl.setZoomRatio(ratio) }
+            }
+
+            val observer = Observer<ZoomState> { zoom ->
+                state.updateFromCamera(
+                    min = zoom.minZoomRatio,
+                    max = zoom.maxZoomRatio,
+                    ratio = zoom.zoomRatio,
+                )
+            }
+            camera.cameraInfo.zoomState.observe(lifecycleOwner, observer)
+
+            onDispose {
+                camera.cameraInfo.zoomState.removeObserver(observer)
+                state.reset()
+            }
+        } else {
             onDispose { }
-            return@DisposableEffect
-        }
-
-        state.applyZoomRatio = { ratio ->
-            runCatching { camera.cameraControl.setZoomRatio(ratio) }
-        }
-
-        val observer = Observer<ZoomState> { zoom ->
-            state.updateFromCamera(
-                min = zoom.minZoomRatio,
-                max = zoom.maxZoomRatio,
-                ratio = zoom.zoomRatio,
-            )
-        }
-        camera.cameraInfo.zoomState.observe(lifecycleOwner, observer)
-
-        onDispose {
-            camera.cameraInfo.zoomState.removeObserver(observer)
-            state.reset()
         }
     }
 
