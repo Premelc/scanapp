@@ -1,4 +1,4 @@
-package com.domelabs.scanapp.core.notification
+package com.domelabs.scanapp.notification
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarData
 import androidx.compose.material3.SnackbarDuration
@@ -36,9 +37,15 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.domelabs.scanapp.core.notification.AppSnackbarDispatcher
+import com.domelabs.scanapp.core.notification.AppSnackbarEvent
+import com.domelabs.scanapp.core.notification.AppSnackbarKind
+import com.domelabs.scanapp.uiComponent.theme.ScanAppTheme
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.DrawableResource
+import org.jetbrains.compose.resources.painterResource
 import kotlin.math.abs
 
 @Composable
@@ -96,14 +103,6 @@ private fun AppSnackbarCard(snackbarData: SnackbarData) {
     val event = visuals.event
     var dragOffsetX by remember(event) { mutableFloatStateOf(0f) }
     val dismissThresholdPx = with(LocalDensity.current) { 100.dp.toPx() }
-    val badge = when (event.kind) {
-        AppSnackbarKind.QrSuccess -> "QR"
-        AppSnackbarKind.BarcodeSuccess -> "BAR"
-        AppSnackbarKind.Error -> "ERR"
-        AppSnackbarKind.Warning -> "WARN"
-        AppSnackbarKind.Success -> "OK"
-        AppSnackbarKind.Info -> "INFO"
-    }
     val toneColor = when (event.kind) {
         AppSnackbarKind.QrSuccess -> MaterialTheme.colorScheme.primary
         AppSnackbarKind.BarcodeSuccess -> MaterialTheme.colorScheme.tertiary
@@ -145,7 +144,11 @@ private fun AppSnackbarCard(snackbarData: SnackbarData) {
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(10.dp),
             ) {
-                Badge(badge = badge, toneColor = toneColor)
+                SnackbarBadge(
+                    icon = snackbarKindIcon(event.kind),
+                    contentDescription = snackbarKindContentDescription(event.kind),
+                    toneColor = toneColor,
+                )
                 Column {
                     Text(
                         text = event.title,
@@ -182,9 +185,28 @@ private fun AppSnackbarCard(snackbarData: SnackbarData) {
     }
 }
 
+private fun snackbarKindIcon(kind: AppSnackbarKind): DrawableResource = when (kind) {
+    AppSnackbarKind.QrSuccess -> ScanAppTheme.Icons.qr
+    AppSnackbarKind.BarcodeSuccess -> ScanAppTheme.Icons.barcode
+    AppSnackbarKind.Error -> ScanAppTheme.Icons.closeCircleOutlined
+    AppSnackbarKind.Warning -> ScanAppTheme.Icons.warning
+    AppSnackbarKind.Success -> ScanAppTheme.Icons.checkCircle
+    AppSnackbarKind.Info -> ScanAppTheme.Icons.info
+}
+
+private fun snackbarKindContentDescription(kind: AppSnackbarKind): String = when (kind) {
+    AppSnackbarKind.QrSuccess -> "QR code"
+    AppSnackbarKind.BarcodeSuccess -> "Barcode"
+    AppSnackbarKind.Error -> "Error"
+    AppSnackbarKind.Warning -> "Warning"
+    AppSnackbarKind.Success -> "Success"
+    AppSnackbarKind.Info -> "Information"
+}
+
 @Composable
-private fun Badge(
-    badge: String,
+private fun SnackbarBadge(
+    icon: DrawableResource,
+    contentDescription: String,
     toneColor: Color,
 ) {
     Box(
@@ -194,10 +216,11 @@ private fun Badge(
             .background(toneColor.copy(alpha = 0.2f)),
         contentAlignment = Alignment.Center,
     ) {
-        Text(
-            text = badge,
-            style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
-            color = toneColor,
+        Icon(
+            painter = painterResource(icon),
+            contentDescription = contentDescription,
+            tint = toneColor,
+            modifier = Modifier.size(20.dp),
         )
     }
 }

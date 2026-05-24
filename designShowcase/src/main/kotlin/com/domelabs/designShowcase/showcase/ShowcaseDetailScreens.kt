@@ -49,7 +49,6 @@ import com.domelabs.scanapp.uiComponent.theme.PastelMint
 import com.domelabs.scanapp.uiComponent.theme.PastelOrange
 import com.domelabs.scanapp.uiComponent.theme.PastelSalmon
 import com.domelabs.scanapp.uiComponent.theme.ScanAppPastels
-import kotlin.collections.get
 
 @Composable
 fun ButtonsShowcaseScreen(onBack: () -> Unit) {

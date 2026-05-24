@@ -8,7 +8,10 @@ plugins {
 
 dependencies {
     implementation(projects.uiComponent)
+    implementation(projects.shared)
+    implementation(projects.core.notification)
 
+    implementation(libs.kotlinx.coroutines.core)
     implementation(libs.compose.runtime)
     implementation(libs.compose.foundation)
     implementation(libs.compose.material3)

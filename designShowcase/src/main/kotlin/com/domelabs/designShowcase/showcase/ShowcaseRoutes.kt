@@ -38,6 +38,18 @@ data object ShowcaseDashedBox
 @Serializable
 data object ShowcaseShadows
 
+@Serializable
+data object ShowcaseSnackbars
+
+@Serializable
+data object ShowcaseIcons
+
+@Serializable
+data object ShowcaseColors
+
+@Serializable
+data object ShowcaseScrollShadows
+
 data class ShowcaseEntry(
     val title: String,
     val description: String,
@@ -56,4 +68,8 @@ val showcaseEntries = listOf(
     ShowcaseEntry("Icon boxes", "Pastel icon containers", ShowcaseIconBoxes),
     ShowcaseEntry("Dashed box", "Empty / drop-zone state", ShowcaseDashedBox),
     ShowcaseEntry("Shadow modifier", "neoBrutalShadow offsets & colors", ShowcaseShadows),
+    ShowcaseEntry("Snackbars", "Scan result toasts with icon badges & actions", ShowcaseSnackbars),
+    ShowcaseEntry("Icons", "ScanAppTheme icon set", ShowcaseIcons),
+    ShowcaseEntry("Colors", "Pastels, brand accents & theme tokens", ShowcaseColors),
+    ShowcaseEntry("Scroll shadows", "Fading edge on scrollable columns", ShowcaseScrollShadows),
 )

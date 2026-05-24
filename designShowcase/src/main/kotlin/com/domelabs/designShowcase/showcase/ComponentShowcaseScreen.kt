@@ -31,7 +31,7 @@ internal fun ComponentShowcaseScreen(
             modifier = Modifier.padding(bottom = 8.dp),
         )
         Text(
-            text = "Neobrutalism components",
+            text = "Neobrutalism components, snackbars, icons & tokens",
             style = MaterialTheme.typography.bodyLarge,
             modifier = Modifier.padding(bottom = 16.dp),
         )

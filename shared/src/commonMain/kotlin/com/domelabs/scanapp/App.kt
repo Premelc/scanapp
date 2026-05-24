@@ -6,7 +6,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import com.domelabs.scanapp.core.navigation.NavRoute
-import com.domelabs.scanapp.core.notification.AppSnackbarHost
+import com.domelabs.scanapp.notification.AppSnackbarHost
 import com.domelabs.scanapp.core.permission.PermissionChecker
 import com.domelabs.scanapp.core.permission.PermissionRequester
 import com.domelabs.scanapp.navigation.LocalNavState

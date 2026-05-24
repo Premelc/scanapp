@@ -13,10 +13,13 @@ import com.domelabs.designShowcase.showcase.CardsShowcaseScreen
 import com.domelabs.designShowcase.showcase.CategoryCardsShowcaseScreen
 import com.domelabs.designShowcase.showcase.CheckboxesShowcaseScreen
 import com.domelabs.designShowcase.showcase.ChipsShowcaseScreen
+import com.domelabs.designShowcase.showcase.ColorsShowcaseScreen
 import com.domelabs.designShowcase.showcase.ComponentShowcaseScreen
 import com.domelabs.designShowcase.showcase.DashedBoxShowcaseScreen
 import com.domelabs.designShowcase.showcase.FabShowcaseScreen
 import com.domelabs.designShowcase.showcase.IconBoxesShowcaseScreen
+import com.domelabs.designShowcase.showcase.IconsShowcaseScreen
+import com.domelabs.designShowcase.showcase.ScrollShadowsShowcaseScreen
 import com.domelabs.designShowcase.showcase.SearchBarShowcaseScreen
 import com.domelabs.designShowcase.showcase.ShadowsShowcaseScreen
 import com.domelabs.designShowcase.showcase.ShowcaseButtons
@@ -24,13 +27,18 @@ import com.domelabs.designShowcase.showcase.ShowcaseCards
 import com.domelabs.designShowcase.showcase.ShowcaseCategoryCards
 import com.domelabs.designShowcase.showcase.ShowcaseCheckboxes
 import com.domelabs.designShowcase.showcase.ShowcaseChips
+import com.domelabs.designShowcase.showcase.ShowcaseColors
 import com.domelabs.designShowcase.showcase.ShowcaseDashedBox
 import com.domelabs.designShowcase.showcase.ShowcaseFab
 import com.domelabs.designShowcase.showcase.ShowcaseHub
 import com.domelabs.designShowcase.showcase.ShowcaseIconBoxes
+import com.domelabs.designShowcase.showcase.ShowcaseIcons
+import com.domelabs.designShowcase.showcase.ShowcaseScrollShadows
 import com.domelabs.designShowcase.showcase.ShowcaseSearchBar
 import com.domelabs.designShowcase.showcase.ShowcaseShadows
+import com.domelabs.designShowcase.showcase.ShowcaseSnackbars
 import com.domelabs.designShowcase.showcase.ShowcaseTextFields
+import com.domelabs.designShowcase.showcase.SnackbarsShowcaseScreen
 import com.domelabs.designShowcase.showcase.TextFieldsShowcaseScreen
 import com.domelabs.scanapp.uiComponent.theme.ProvideScanAppTheme
 
@@ -77,6 +85,18 @@ fun App() {
                 }
                 composable<ShowcaseShadows> {
                     ShadowsShowcaseScreen(onBack = { navController.popBackStack() })
+                }
+                composable<ShowcaseSnackbars> {
+                    SnackbarsShowcaseScreen(onBack = { navController.popBackStack() })
+                }
+                composable<ShowcaseIcons> {
+                    IconsShowcaseScreen(onBack = { navController.popBackStack() })
+                }
+                composable<ShowcaseColors> {
+                    ColorsShowcaseScreen(onBack = { navController.popBackStack() })
+                }
+                composable<ShowcaseScrollShadows> {
+                    ScrollShadowsShowcaseScreen(onBack = { navController.popBackStack() })
                 }
             }
         }
