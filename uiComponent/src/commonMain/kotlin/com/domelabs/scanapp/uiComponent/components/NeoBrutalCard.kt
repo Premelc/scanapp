@@ -17,14 +17,13 @@ import com.domelabs.scanapp.uiComponent.theme.NeoWhite
 
 @Composable
 fun NeoBrutalCard(
-    modifier: Modifier = Modifier,
+    modifier: Modifier = Modifier.fillMaxWidth(),
     onClick: (() -> Unit)? = null,
     backgroundColor: Color = NeoWhite,
     showShadow: Boolean = true,
     content: @Composable ColumnScope.() -> Unit,
 ) {
     var cardModifier = modifier
-        .fillMaxWidth()
         .neoBrutalStyle(
             backgroundColor = backgroundColor,
             cornerRadius = NeoBrutalism.CornerRadius,

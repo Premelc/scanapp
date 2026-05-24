@@ -3,6 +3,7 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 plugins {
     alias(libs.plugins.androidApplication)
     alias(libs.plugins.composeCompiler)
+    alias(libs.plugins.aboutLibraries)
 }
 
 dependencies {
@@ -43,5 +44,14 @@ android {
 kotlin {
     compilerOptions {
         jvmTarget = JvmTarget.JVM_11
+    }
+}
+
+aboutLibraries {
+    export {
+        outputFile = rootProject.file(
+            "feature/settings/impl/src/commonMain/composeResources/files/aboutlibraries.json"
+        )
+        prettyPrint = true
     }
 }

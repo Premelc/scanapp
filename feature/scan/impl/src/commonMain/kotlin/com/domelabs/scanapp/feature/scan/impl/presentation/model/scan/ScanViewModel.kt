@@ -99,6 +99,13 @@ class ScanViewModel(
                 }
             }
 
+            ScanInteraction.NavigateToAbout -> {
+                viewModelScope.launch {
+                    menuDrawerOpen.value = false
+                    NavigationDispatcher.navigate(NavRoute.About)
+                }
+            }
+
             ScanInteraction.ToggleFlashlight -> {
                 flashEnabled.value = !flashEnabled.value
             }

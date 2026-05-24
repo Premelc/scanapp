@@ -12,9 +12,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBarsPadding
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -48,7 +46,10 @@ import com.domelabs.scanapp.uiComponent.components.LocalScreenMetrics
 import com.domelabs.scanapp.uiComponent.components.NeoBrutalButton
 import com.domelabs.scanapp.uiComponent.components.NeoBrutalButtonStyle
 import com.domelabs.scanapp.uiComponent.components.NeoBrutalCard
+import com.domelabs.scanapp.uiComponent.components.NeoBrutalIconBadgeButton
 import com.domelabs.scanapp.uiComponent.components.shadow.ScrollableShadowColumn
+import com.domelabs.scanapp.uiComponent.theme.NeoBlack
+import com.domelabs.scanapp.uiComponent.theme.NeoWhite
 import com.domelabs.scanapp.uiComponent.theme.ScanAppTheme
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -130,18 +131,23 @@ private fun ScanDetailsContent(
                     onInteraction(ScanDetailsInteraction.Back)
                 },
             )
-            NeoBrutalButton(
-                text = "Share",
-                style = NeoBrutalButtonStyle.Primary,
-                onClick = { onInteraction(ScanDetailsInteraction.Share) },
-                leadingIcon = {
-                    Icon(
-                        painter = painterResource(ScanAppTheme.Icons.share),
-                        contentDescription = null,
-                        tint = Color.Unspecified,
-                    )
-                },
-            )
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                NeoBrutalIconBadgeButton(
+                    icon = ScanAppTheme.Icons.trash,
+                    contentDescription = "Delete scan",
+                    onClick = { onInteraction(ScanDetailsInteraction.Delete(historyItem.id)) },
+                )
+                NeoBrutalIconBadgeButton(
+                    icon = ScanAppTheme.Icons.share,
+                    contentDescription = "Share scan",
+                    onClick = { onInteraction(ScanDetailsInteraction.Share) },
+                    backgroundColor = NeoBlack,
+                    iconTint = NeoWhite,
+                )
+            }
         }
         ScrollableShadowColumn(
             modifier = Modifier.padding(horizontal = 12.dp),

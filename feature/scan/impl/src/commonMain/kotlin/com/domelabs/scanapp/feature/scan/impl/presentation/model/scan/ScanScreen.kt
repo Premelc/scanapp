@@ -124,6 +124,7 @@ private fun ScanScreenContent(
         navigateHistory = { onInteraction(ScanInteraction.NavigateToHistory) },
         navigateSettings = { onInteraction(ScanInteraction.NavigateToSettings) },
         navigateCollections = { onInteraction(ScanInteraction.NavigateToCollections) },
+        navigateAbout = { onInteraction(ScanInteraction.NavigateToAbout) },
     ) {
         Box(
             modifier = Modifier.fillMaxSize()

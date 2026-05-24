@@ -17,6 +17,12 @@ sealed class NavRoute {
     data object Collections : NavRoute()
 
     @Serializable
+    data object About : NavRoute()
+
+    @Serializable
+    data object Licenses : NavRoute()
+
+    @Serializable
     data class ScanDetails(
         val id: Long,
     ) : NavRoute()

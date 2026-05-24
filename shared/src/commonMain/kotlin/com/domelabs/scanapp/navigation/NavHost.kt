@@ -15,6 +15,8 @@ import com.domelabs.scanapp.feature.collections.api.CollectionsScreenEntryPoint
 import com.domelabs.scanapp.feature.scan.api.ScanDetailsEntryPoint
 import com.domelabs.scanapp.feature.scan.api.ScanHistoryEntryPoint
 import com.domelabs.scanapp.feature.scan.api.ScanScreenEntryPoint
+import com.domelabs.scanapp.feature.settings.api.AboutScreenEntryPoint
+import com.domelabs.scanapp.feature.settings.api.LicensesScreenEntryPoint
 import com.domelabs.scanapp.feature.settings.api.SettingsScreenEntryPoint
 
 @Composable
@@ -59,6 +61,12 @@ internal fun EntryProviderScope<NavRoute>.coreNavigation() {
     }
     entry<NavRoute.Collections> {
         CollectionsScreenEntryPoint()
+    }
+    entry<NavRoute.About> {
+        AboutScreenEntryPoint()
+    }
+    entry<NavRoute.Licenses> {
+        LicensesScreenEntryPoint()
     }
     entry<NavRoute.ScanDetails> { route ->
         ScanDetailsEntryPoint(route)

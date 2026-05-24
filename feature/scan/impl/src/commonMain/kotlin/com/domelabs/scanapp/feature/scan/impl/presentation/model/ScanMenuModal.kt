@@ -4,6 +4,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -28,6 +29,7 @@ import androidx.compose.ui.unit.dp
 import com.domelabs.scanapp.uiComponent.components.NeoBrutalButton
 import com.domelabs.scanapp.uiComponent.components.NeoBrutalButtonStyle
 import com.domelabs.scanapp.uiComponent.components.NeoBrutalCard
+import com.domelabs.scanapp.uiComponent.components.brand.DomeLabsWordMark
 import com.domelabs.scanapp.uiComponent.theme.NeoWhite
 import com.domelabs.scanapp.uiComponent.theme.ScanAppTheme
 import kotlinx.coroutines.flow.drop
@@ -48,6 +50,7 @@ internal fun ScanMenuDrawerLayout(
     navigateHistory: () -> Unit,
     navigateSettings: () -> Unit,
     navigateCollections: () -> Unit,
+    navigateAbout: () -> Unit,
     content: @Composable () -> Unit,
 ) {
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
@@ -84,6 +87,7 @@ internal fun ScanMenuDrawerLayout(
                             navigateHistory = navigateHistory,
                             navigateSettings = navigateSettings,
                             navigateCollections = navigateCollections,
+                            navigateAbout = navigateAbout,
                         )
                     }
                 }
@@ -102,6 +106,7 @@ private fun MenuDrawerSheetContent(
     navigateHistory: () -> Unit,
     navigateSettings: () -> Unit,
     navigateCollections: () -> Unit,
+    navigateAbout: () -> Unit,
 ) {
     val items = listOf(
         MenuNavItem(
@@ -121,6 +126,12 @@ private fun MenuDrawerSheetContent(
             description = "Browse saved collections and groups",
             startIcon = ScanAppTheme.Icons.folder,
             onClick = navigateCollections,
+        ),
+        MenuNavItem(
+            title = "About",
+            description = "App info, legal links, and version",
+            startIcon = ScanAppTheme.Icons.info,
+            onClick = navigateAbout,
         ),
     )
 
@@ -151,6 +162,7 @@ private fun MenuDrawerSheetContent(
                 .fillMaxWidth()
                 .padding(top = 12.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
             items.forEach { item ->
                 NeoBrutalCard(
@@ -187,6 +199,10 @@ private fun MenuDrawerSheetContent(
                     }
                 }
             }
+            Spacer(modifier = Modifier.weight(1f))
+            DomeLabsWordMark(
+                isDark = false
+            )
         }
     }
 }

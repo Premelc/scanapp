@@ -40,6 +40,7 @@ class ScanDetailsViewModel(
 
             is ScanDetailsInteraction.Delete -> viewModelScope.launch {
                 scanHistoryRepository.deleteHistoryItem(id)
+                NavigationDispatcher.back()
             }
 
             ScanDetailsInteraction.Share -> showShareSheet.update { true }

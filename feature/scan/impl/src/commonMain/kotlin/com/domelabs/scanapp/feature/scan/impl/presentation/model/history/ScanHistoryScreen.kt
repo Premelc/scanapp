@@ -1,16 +1,15 @@
 package com.domelabs.scanapp.feature.scan.impl.presentation.model.history
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.systemBarsPadding
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -24,7 +23,9 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.domelabs.scanapp.uiComponent.components.NeoBrutalButton
 import com.domelabs.scanapp.uiComponent.components.NeoBrutalButtonStyle
 import com.domelabs.scanapp.uiComponent.components.NeoBrutalCard
+import com.domelabs.scanapp.uiComponent.components.NeoBrutalIconBadgeButton
 import com.domelabs.scanapp.uiComponent.components.shadow.LazyShadowColumn
+import com.domelabs.scanapp.uiComponent.theme.ScanAppTheme
 import org.koin.compose.koinInject
 
 @Composable
@@ -78,9 +79,7 @@ fun ScanHistoryScreen(
             ) {
                 items(state.historyItems, key = { it.id }) { item ->
                     NeoBrutalCard(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable { viewModel.openDetails(item) },
+                        modifier = Modifier.fillMaxWidth(),
                         showShadow = false,
                     ) {
                         Row(
@@ -91,7 +90,8 @@ fun ScanHistoryScreen(
                             Column(
                                 modifier = Modifier
                                     .weight(1f)
-                                    .padding(end = 8.dp),
+                                    .padding(end = 8.dp)
+                                    .clickable { viewModel.openDetails(item) },
                                 verticalArrangement = Arrangement.spacedBy(2.dp),
                             ) {
                                 Text(
@@ -109,9 +109,9 @@ fun ScanHistoryScreen(
                                     style = MaterialTheme.typography.labelSmall,
                                 )
                             }
-                            NeoBrutalButton(
-                                text = "Del",
-                                style = NeoBrutalButtonStyle.Secondary,
+                            NeoBrutalIconBadgeButton(
+                                icon = ScanAppTheme.Icons.trash,
+                                contentDescription = "Delete scan",
                                 onClick = { viewModel.onDelete(item.id) },
                             )
                         }

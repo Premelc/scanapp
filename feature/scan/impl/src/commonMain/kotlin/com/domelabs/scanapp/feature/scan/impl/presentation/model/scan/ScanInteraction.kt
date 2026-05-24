@@ -9,6 +9,7 @@ sealed interface ScanInteraction {
     data object NavigateToHistory : ScanInteraction
     data object NavigateToSettings : ScanInteraction
     data object NavigateToCollections : ScanInteraction
+    data object NavigateToAbout : ScanInteraction
     data object ToggleFlashlight : ScanInteraction
     data object RequestCameraPermission : ScanInteraction
     data object OpenGalleryPicker : ScanInteraction
